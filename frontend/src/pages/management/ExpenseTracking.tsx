@@ -1,15 +1,13 @@
-// frontend/src/pages/management/ExpenseTracking.tsx
-
-import React, { useState, useMemo, useContext, useEffect } from 'react';
-import { PlusCircle, Edit, Trash2, AlertTriangle, Search, ChevronDown } from 'lucide-react'; // Import icons
-import { useData } from '../../hooks/useData'; // Import useData hook
-import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
-import Modal from '../../components/ui/Modal'; // Import Modal component
-import InputField from '../../components/ui/InputField'; // Import InputField component
-import SelectField from '../../components/ui/SelectField'; // Import SelectField component
-import Button from '../../components/ui/Button'; // Import Button component
-import DataTable from '../../components/tables/DataTable'; // Import DataTable component
-import { Expense, Property } from '../../types/models'; // Import Expense, Property types
+import React, { useState, useMemo, useEffect } from 'react';
+import { PlusCircle, Edit, Trash2, AlertTriangle, Search, ChevronDown } from 'lucide-react'; // Icons
+import { useData } from '../../hooks/useData';
+import { useAuth } from '../../hooks/useAuth';
+import Modal from '../../components/ui/Modal';
+import InputField from '../../components/ui/InputField';
+import SelectField from '../../components/ui/SelectField';
+import Button from '../../components/ui/Button';
+import DataTable from '../../components/tables/DataTable';
+import type { Expense, Property } from '../../types/models';
 
 /**
  * ExpenseTracking component.
@@ -18,7 +16,7 @@ import { Expense, Property } from '../../types/models'; // Import Expense, Prope
  */
 const ExpenseTracking: React.FC = () => {
   const { data, setData, logAction, sendNotification } = useData();
-  const { currentUserId } = useAuth(); // Get the current landlord's ID
+  const { currentUserId } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -27,25 +25,25 @@ const ExpenseTracking: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
 
-  // Filter properties to show only those belonging to the current landlord
+  // Properties owned by current landlord
   const landlordProperties = useMemo(() => {
     return data.properties.filter(p => p.landlordId === currentUserId);
   }, [data.properties, currentUserId]);
 
-  // Filter expenses to show only those associated with the current landlord's properties
+  // Expenses associated with landlord's properties
   const landlordExpenses = useMemo(() => {
     const propIds = landlordProperties.map(p => p.id);
     return data.expenses.filter(e => propIds.includes(e.propertyId));
   }, [data.expenses, landlordProperties]);
 
-  // Extract unique expense categories for filtering
+  // Unique categories from landlord expenses
   const expenseCategories = useMemo(() => {
     const categories = new Set<string>();
     landlordExpenses.forEach(e => categories.add(e.category));
     return ['All', ...Array.from(categories).sort()];
   }, [landlordExpenses]);
 
-  // Filtered expenses based on search term and category
+  // Filter expenses by search term and category
   const filteredExpenses = useMemo(() => {
     let expenses = landlordExpenses;
 
@@ -64,28 +62,19 @@ const ExpenseTracking: React.FC = () => {
     return expenses;
   }, [landlordExpenses, searchTerm, filterCategory, data.properties]);
 
-  /**
-   * Handles opening the modal to log a new expense.
-   */
+  // Open modal to log a new expense
   const handleLogExpenseClick = () => {
     setEditingExpense(null);
     setIsModalOpen(true);
   };
 
-  /**
-   * Handles opening the modal to edit an existing expense.
-   * @param expense The expense object to edit.
-   */
+  // Open modal to edit existing expense
   const handleEditExpenseClick = (expense: Expense) => {
     setEditingExpense(expense);
     setIsModalOpen(true);
   };
 
-  /**
-   * Handles saving a new or updated expense.
-   * Updates the global data state and logs the action.
-   * @param expenseData The data of the expense to save.
-   */
+  // Save new or updated expense
   const handleSaveExpense = (expenseData: Expense) => {
     setData(prev => {
       let updatedExpenses = [...prev.expenses];
@@ -105,18 +94,13 @@ const ExpenseTracking: React.FC = () => {
     setEditingExpense(null);
   };
 
-  /**
-   * Handles initiating expense deletion.
-   * @param expense The expense object to delete.
-   */
+  // Initiate expense deletion
   const handleDeleteExpenseClick = (expense: Expense) => {
     setExpenseToDelete(expense);
     setIsDeleteConfirmOpen(true);
   };
 
-  /**
-   * Performs the actual deletion of an expense.
-   */
+  // Perform deletion
   const performDeleteExpense = () => {
     if (expenseToDelete) {
       setData(prev => {
@@ -130,11 +114,13 @@ const ExpenseTracking: React.FC = () => {
     }
   };
 
-  /**
-   * ExpenseForm component (nested for simplicity).
-   * Form for logging/editing expense details.
-   */
-  const ExpenseForm: React.FC<{ expense: Expense | null; onSave: (data: Expense) => void; onCancel: () => void; properties: Property[] }> = ({ expense, onSave, onCancel, properties }) => {
+  // Form component for adding/editing expenses
+  const ExpenseForm: React.FC<{
+    expense: Expense | null;
+    onSave: (data: Expense) => void;
+    onCancel: () => void;
+    properties: Property[];
+  }> = ({ expense, onSave, onCancel, properties }) => {
     const [formData, setFormData] = useState<Expense>(() => expense || {
       id: `e${Date.now()}`,
       propertyId: '',
@@ -145,7 +131,6 @@ const ExpenseTracking: React.FC = () => {
     });
     const [errors, setErrors] = useState<{ [key: string]: string | undefined }>({});
 
-    // Update form data if editingExpense changes
     useEffect(() => {
       if (expense) {
         setFormData(expense);
@@ -159,7 +144,7 @@ const ExpenseTracking: React.FC = () => {
           date: new Date().toISOString().split('T')[0],
         });
       }
-      setErrors({}); // Clear errors on form open/reset
+      setErrors({});
     }, [expense]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -187,7 +172,6 @@ const ExpenseTracking: React.FC = () => {
       }
     };
 
-    // Common categories for expenses
     const categories = ['Repairs', 'Utilities', 'Management Fees', 'Security', 'Cleaning', 'Marketing', 'Other'];
 
     return (
@@ -210,9 +194,35 @@ const ExpenseTracking: React.FC = () => {
           options={categories.map(cat => ({ value: cat, label: cat }))}
           required
         />
-        <InputField id="description" type="text" label="Description" value={formData.description} onChange={handleChange} error={errors.description} isTextArea required />
-        <InputField id="amount" type="number" label="Amount (KES)" value={formData.amount} onChange={handleChange} error={errors.amount} required min="0" />
-        <InputField id="date" type="date" label="Date" value={formData.date} onChange={handleChange} error={errors.date} required />
+        <InputField
+          id="description"
+          type="text"
+          label="Description"
+          value={formData.description}
+          onChange={handleChange}
+          error={errors.description}
+          isTextArea
+          required
+        />
+        <InputField
+          id="amount"
+          type="number"
+          label="Amount (KES)"
+          value={formData.amount}
+          onChange={handleChange}
+          error={errors.amount}
+          required
+          min="0"
+        />
+        <InputField
+          id="date"
+          type="date"
+          label="Date"
+          value={formData.date}
+          onChange={handleChange}
+          error={errors.date}
+          required
+        />
         <div className="flex justify-end space-x-4 pt-4">
           <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
           <Button type="submit" variant="primary">{expense ? "Update Expense" : "Log Expense"}</Button>
@@ -221,17 +231,22 @@ const ExpenseTracking: React.FC = () => {
     );
   };
 
-  /**
-   * DeleteConfirmationModal component (nested for simplicity).
-   * Generic modal for confirming deletion actions.
-   */
-  const DeleteConfirmationModal: React.FC<{ isOpen: boolean; onClose: () => void; onConfirm: () => void; itemType: string; itemName: string | undefined }> = ({ isOpen, onClose, onConfirm, itemType, itemName }) => {
+  // Modal for confirming deletion
+  const DeleteConfirmationModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    itemType: string;
+    itemName: string | undefined;
+  }> = ({ isOpen, onClose, onConfirm, itemType, itemName }) => {
     if (!isOpen) return null;
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={`Confirm Delete ${itemType}`}>
         <div className="p-4 text-center">
           <AlertTriangle size={64} className="text-red-500 mx-auto mb-6" />
-          <p className="text-lg text-white mb-8">Are you sure you want to delete {itemType} <span className="font-bold text-red-400">"{itemName}"</span>? This action cannot be undone.</p>
+          <p className="text-lg text-white mb-8">
+            Are you sure you want to delete {itemType} <span className="font-bold text-red-400">"{itemName}"</span>? This action cannot be undone.
+          </p>
           <div className="flex justify-center space-x-4">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             <Button variant="danger" onClick={onConfirm}>Delete</Button>
@@ -241,7 +256,7 @@ const ExpenseTracking: React.FC = () => {
     );
   };
 
-  // Define columns for the DataTable
+  // DataTable columns
   const expenseTableColumns = useMemo(() => [
     {
       key: 'property',
@@ -273,21 +288,21 @@ const ExpenseTracking: React.FC = () => {
         </div>
       ),
     },
-  ], [data.properties]); // Re-memoize if properties change to update property names
+  ], [data.properties]);
 
   return (
     <>
-      {/* Expense Log/Edit Modal */}
+      {/* Log/Edit Expense Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingExpense ? "Edit Expense" : "Log New Expense"}>
         <ExpenseForm
           expense={editingExpense}
           onSave={handleSaveExpense}
           onCancel={() => setIsModalOpen(false)}
-          properties={landlordProperties} // Pass only landlord's properties
+          properties={landlordProperties}
         />
       </Modal>
 
-      {/* Expense Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
@@ -300,7 +315,7 @@ const ExpenseTracking: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
           <h3 className="text-xl font-semibold">Expense Log</h3>
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
-            {/* Search Input */}
+            {/* Search */}
             <div className="relative flex-grow w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -328,7 +343,8 @@ const ExpenseTracking: React.FC = () => {
             </Button>
           </div>
         </div>
-        {/* Expenses Data Table */}
+
+        {/* Expenses Table */}
         <DataTable<Expense>
           data={filteredExpenses}
           columns={expenseTableColumns}

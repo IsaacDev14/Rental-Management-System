@@ -1,11 +1,9 @@
-// frontend/src/pages/reports/Reports.tsx
-
-import React, { useState, useMemo, useContext } from 'react';
-import { ChevronDown, FilePlus, DollarSign, FileText, BarChart2, Landmark } from 'lucide-react'; // Import icons
-import { useData } from '../../hooks/useData'; // Import useData hook
-import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
-import Button from '../../components/ui/Button'; // Import Button component
-import { ReportEntry } from '../../types/common'; // Import ReportEntry type
+import React, { useMemo } from 'react';
+import { ChevronDown, DollarSign, FileText } from 'lucide-react'; // only used icons
+import { useData } from '../../hooks/useData';
+import { useAuth } from '../../hooks/useAuth';
+import Button from '../../components/ui/Button';
+import type { ReportEntry } from '../../types/common'; // type-only import
 
 /**
  * Reports component.
@@ -65,11 +63,12 @@ const Reports: React.FC = () => {
     });
 
     return reports;
-  }, [data, userRole, currentUserId]);
+  }, [data, isLandlord, currentUserId]);
 
   return (
     <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 text-white">
       <h3 className="text-xl font-semibold mb-6">Reports & Analytics</h3>
+
       {isLandlord && (
         <div className="mb-8">
           <h4 className="text-lg font-semibold mb-4 text-cyan-400">My Financial Reports</h4>

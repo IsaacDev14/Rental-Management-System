@@ -1,8 +1,6 @@
-// frontend/src/components/common/StatCard.tsx
-
 import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react'; // Import icons for change indicator
-import { StatCardProps } from '../../types/common'; // Import StatCardProps interface
+import type { StatCardProps } from '../../types/common'; // Use type-only import for the interface
 
 /**
  * Reusable StatCard component for displaying key metrics.

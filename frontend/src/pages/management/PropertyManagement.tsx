@@ -1,15 +1,12 @@
-// frontend/src/pages/management/PropertyManagement.tsx
-
-import React, { useState, useMemo, useContext } from 'react';
-import { PlusCircle, MapPin, Edit, Trash2, Home, User } from 'lucide-react'; // Import icons
-import { useData } from '../../hooks/useData'; // Import useData hook
-import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
-import Modal from '../../components/ui/Modal'; // Import Modal component
-import InputField from '../../components/ui/InputField'; // Import InputField component
-import Button from '../../components/ui/Button'; // Import Button component
-import ImageCarousel from '../../components/common/ImageCarousel'; // Import ImageCarousel component
-import { Property, Unit } from '../../types/models'; // Import Property and Unit types
-import { getUnsplashImageUrl } from '../../utils/helpers'; // Import helper for Unsplash URLs
+import React, { useState, useMemo } from 'react';
+import { PlusCircle, MapPin, Edit, Trash2, Home, User } from 'lucide-react';
+import { useData } from '../../hooks/useData';
+import { useAuth } from '../../hooks/useAuth';
+import Modal from '../../components/ui/Modal';
+import InputField from '../../components/ui/InputField';
+import Button from '../../components/ui/Button';
+import ImageCarousel from '../../components/common/ImageCarousel';
+import type { Property, Unit } from '../../types/models'; // ✅ Use type-only import
 
 /**
  * PropertyManagement component.
@@ -17,7 +14,7 @@ import { getUnsplashImageUrl } from '../../utils/helpers'; // Import helper for 
  */
 const PropertyManagement: React.FC = () => {
   const { data, setData, logAction, sendNotification } = useData();
-  const { currentUserId } = useAuth(); // Get the current landlord's ID
+  const { currentUserId } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
@@ -25,19 +22,13 @@ const PropertyManagement: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
-  // Filter properties to show only those belonging to the current landlord
   const landlordProperties = useMemo(() => {
     return data.properties.filter(p => p.landlordId === currentUserId);
   }, [data.properties, currentUserId]);
 
-  /**
-   * Handles saving a new or updated property.
-   * @param propertyData The data of the property to save.
-   */
   const handleSaveProperty = (propertyData: { name: string; location: string }) => {
     setData(prev => {
       if (editingProperty) {
-        // Update existing property
         logAction(`Updated property: ${propertyData.name}`);
         return {
           ...prev,
@@ -46,14 +37,13 @@ const PropertyManagement: React.FC = () => {
           )
         };
       } else {
-        // Add new property
         const newProperty: Property = {
           id: `prop${Date.now()}`,
-          landlordId: currentUserId || 'l1', // Assign to current landlord, fallback to 'l1'
+          landlordId: currentUserId || 'l1',
           ...propertyData,
-          units: [], // New properties start with no units
-          images: [], // New properties start with no images
-          coordinates: { lat: 0, lng: 0 } // Default coordinates
+          units: [],
+          images: [],
+          coordinates: { lat: 0, lng: 0 }
         };
         logAction(`Added new property: ${newProperty.name}`);
         sendNotification(`New property "${newProperty.name}" added.`);
@@ -64,43 +54,30 @@ const PropertyManagement: React.FC = () => {
     setEditingProperty(null);
   };
 
-  /**
-   * Handles initiating property edit.
-   * @param property The property to edit.
-   */
   const handleEditPropertyClick = (property: Property) => {
     setEditingProperty(property);
     setIsModalOpen(true);
   };
 
-  /**
-   * Handles initiating property deletion.
-   * @param property The property to delete.
-   */
   const handleDeletePropertyClick = (property: Property) => {
     setPropertyToDelete(property);
     setIsDeleteConfirmOpen(true);
   };
 
-  /**
-   * Performs the actual deletion of a property.
-   */
   const performDeleteProperty = () => {
     if (propertyToDelete) {
       setData(prev => {
-        // Also remove any tenants associated with units in this property
         const updatedTenants = prev.tenants.filter(t => t.propertyId !== propertyToDelete.id);
-        // And update units in other properties that might have been assigned to these tenants (if multi-property tenant was allowed)
         const updatedProperties = prev.properties.map(p => {
-          if (p.id === propertyToDelete.id) return null; // Remove this property
+          if (p.id === propertyToDelete.id) return null;
           return {
             ...p,
             units: p.units.map(unit => ({
               ...unit,
-              tenantId: updatedTenants.some(t => t.id === unit.tenantId) ? unit.tenantId : null // Remove tenantId if tenant was deleted
+              tenantId: updatedTenants.some(t => t.id === unit.tenantId) ? unit.tenantId : null
             }))
           };
-        }).filter(Boolean) as Property[]; // Filter out the null (deleted) property
+        }).filter(Boolean) as Property[];
 
         logAction(`Deleted property: ${propertyToDelete.name}`);
         sendNotification(`Property "${propertyToDelete.name}" has been deleted.`);
@@ -108,8 +85,7 @@ const PropertyManagement: React.FC = () => {
           ...prev,
           properties: updatedProperties,
           tenants: updatedTenants,
-          // You might also need to clean up payments, expenses, deposits related to this property
-          payments: prev.payments.filter(p => !updatedTenants.some(t => t.id === p.tenantId)), // Remove payments of deleted tenants
+          payments: prev.payments.filter(p => !updatedTenants.some(t => t.id === p.tenantId)),
           expenses: prev.expenses.filter(e => e.propertyId !== propertyToDelete.id),
           deposits: prev.deposits.filter(d => d.propertyId !== propertyToDelete.id),
         };
@@ -119,10 +95,6 @@ const PropertyManagement: React.FC = () => {
     }
   };
 
-  /**
-   * PropertyForm component (nested for simplicity, could be separate file).
-   * Form for adding/editing property details.
-   */
   const PropertyForm: React.FC<{ property: Property | null; onSave: (data: { name: string; location: string }) => void; onCancel: () => void }> = ({ property, onSave, onCancel }) => {
     const [name, setName] = useState(property?.name || '');
     const [location, setLocation] = useState(property?.location || '');
@@ -144,10 +116,6 @@ const PropertyManagement: React.FC = () => {
     );
   };
 
-  /**
-   * PropertyDetailView component (nested for simplicity, could be separate file).
-   * Displays details of a selected property, including its units.
-   */
   const PropertyDetailView: React.FC<{ property: Property; onBack: () => void }> = ({ property, onBack }) => {
     const { data } = useData();
     const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
@@ -155,21 +123,15 @@ const PropertyManagement: React.FC = () => {
     const [isUnitDeleteConfirmOpen, setIsUnitDeleteConfirmOpen] = useState(false);
     const [unitToDelete, setUnitToDelete] = useState<Unit | null>(null);
 
-    /**
-     * Handles saving a new or updated unit for the current property.
-     * @param unitData The data of the unit to save.
-     */
     const handleSaveUnit = (unitData: { name: string; type: string; rent: number }) => {
       setData(prev => {
         const updatedProperties = prev.properties.map(p => {
           if (p.id === property.id) {
             let updatedUnits;
             if (editingUnit) {
-              // Update existing unit
               updatedUnits = p.units.map(u => u.id === editingUnit.id ? { ...u, ...unitData } : u);
               logAction(`Updated unit "${unitData.name}" in property "${property.name}".`);
             } else {
-              // Add new unit
               const newUnit: Unit = { id: `unit${Date.now()}`, tenantId: null, ...unitData };
               updatedUnits = [...p.units, newUnit];
               logAction(`Added new unit "${newUnit.name}" to property "${property.name}".`);
@@ -185,38 +147,24 @@ const PropertyManagement: React.FC = () => {
       setEditingUnit(null);
     };
 
-    /**
-     * Handles initiating unit edit.
-     * @param unit The unit to edit.
-     */
     const handleEditUnitClick = (unit: Unit) => {
       setEditingUnit(unit);
       setIsUnitModalOpen(true);
     };
 
-    /**
-     * Handles initiating unit deletion.
-     * @param unit The unit to delete.
-     */
     const handleDeleteUnitClick = (unit: Unit) => {
       setUnitToDelete(unit);
       setIsUnitDeleteConfirmOpen(true);
     };
 
-    /**
-     * Performs the actual deletion of a unit.
-     */
     const performDeleteUnit = () => {
       if (unitToDelete) {
         setData(prev => {
           const updatedProperties = prev.properties.map(p => {
             if (p.id === property.id) {
-              // If the unit had a tenant, unassign the tenant from the unit
               if (unitToDelete.tenantId) {
                 const tenant = prev.tenants.find(t => t.id === unitToDelete.tenantId);
                 if (tenant) {
-                  // In a real app, you might want to reassign the tenant or end their lease
-                  // For now, we'll just log and potentially clear their unit assignment
                   logAction(`Tenant ${tenant.name} unassigned from unit ${unitToDelete.name} due to unit deletion.`);
                   sendNotification(`Tenant ${tenant.name} unassigned from unit ${unitToDelete.name}.`);
                 }
@@ -235,10 +183,6 @@ const PropertyManagement: React.FC = () => {
       }
     };
 
-    /**
-     * UnitForm component (nested for simplicity).
-     * Form for adding/editing unit details.
-     */
     const UnitForm: React.FC<{ unit: Unit | null; onSave: (data: { name: string; type: string; rent: number }) => void; onCancel: () => void }> = ({ unit, onSave, onCancel }) => {
       const [name, setName] = useState(unit?.name || '');
       const [type, setType] = useState(unit?.type || '');
@@ -264,12 +208,9 @@ const PropertyManagement: React.FC = () => {
 
     return (
       <>
-        {/* Unit Add/Edit Modal */}
         <Modal isOpen={isUnitModalOpen} onClose={() => setIsUnitModalOpen(false)} title={editingUnit ? "Edit Unit" : "Add New Unit"}>
           <UnitForm unit={editingUnit} onSave={handleSaveUnit} onCancel={() => setIsUnitModalOpen(false)} />
         </Modal>
-
-        {/* Unit Delete Confirmation Modal */}
         <Modal isOpen={isUnitDeleteConfirmOpen} onClose={() => setIsUnitDeleteConfirmOpen(false)} title="Confirm Unit Deletion">
           <div className="p-4 text-center">
             <p className="text-lg text-white mb-8">Are you sure you want to delete unit <span className="font-bold text-red-400">"{unitToDelete?.name}"</span>? This action cannot be undone.</p>
@@ -279,11 +220,8 @@ const PropertyManagement: React.FC = () => {
             </div>
           </div>
         </Modal>
-
         <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 text-white">
-          <Button variant="ghost" onClick={onBack} className="mb-6 flex items-center text-cyan-400 hover:text-cyan-300">
-            ← Back to All Properties
-          </Button>
+          <Button variant="ghost" onClick={onBack} className="mb-6 flex items-center text-cyan-400 hover:text-cyan-300">← Back to All Properties</Button>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div>
               <h3 className="text-3xl font-bold">{property.name}</h3>
@@ -293,14 +231,11 @@ const PropertyManagement: React.FC = () => {
               <PlusCircle className="mr-2" /> Add Unit
             </Button>
           </div>
-
-          {/* Property Images Carousel */}
           {property.images.length > 0 && (
             <div className="mb-8">
               <ImageCarousel images={property.images} />
             </div>
           )}
-
           <div className="mt-6">
             <h4 className="text-xl font-semibold mb-4">Units</h4>
             <div className="space-y-4">
@@ -342,12 +277,9 @@ const PropertyManagement: React.FC = () => {
 
   return (
     <>
-      {/* Property Add/Edit Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingProperty ? "Edit Property" : "Add New Property"}>
         <PropertyForm property={editingProperty} onSave={handleSaveProperty} onCancel={() => setIsModalOpen(false)} />
       </Modal>
-
-      {/* Property Delete Confirmation Modal */}
       <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Confirm Property Deletion">
         <div className="p-4 text-center">
           <p className="text-lg text-white mb-8">Are you sure you want to delete property <span className="font-bold text-red-400">"{propertyToDelete?.name}"</span>? This action cannot be undone and will also remove associated tenants, payments, expenses, and deposits.</p>
@@ -357,8 +289,6 @@ const PropertyManagement: React.FC = () => {
           </div>
         </div>
       </Modal>
-
-      {/* Main Property Management View */}
       {selectedProperty ? (
         <PropertyDetailView property={selectedProperty} onBack={() => setSelectedProperty(null)} />
       ) : (
@@ -384,7 +314,7 @@ const PropertyManagement: React.FC = () => {
                       <span className="font-semibold text-white">{occupied} / {total}</span>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
-                      <div className="bg-cyan-500 h-2.5 rounded-full" style={{width: `${total > 0 ? (occupied/total)*100 : 0}%`}}></div>
+                      <div className="bg-cyan-500 h-2.5 rounded-full" style={{ width: `${total > 0 ? (occupied / total) * 100 : 0}%` }}></div>
                     </div>
                     <div className="flex justify-between items-center mt-3 text-sm text-gray-300">
                       <span>Monthly Income:</span>
@@ -404,7 +334,7 @@ const PropertyManagement: React.FC = () => {
               );
             }) : (
               <div className="col-span-full p-8 text-center bg-gray-800 rounded-xl shadow-xl border border-gray-700">
-                <p className="text-gray-400 text-lg">No properties added yet. Click "Add Property" to get started!</p>
+                <p className="text-gray-400 text-lg">No properties added yet. Click "Add Property" to get started.</p>
               </div>
             )}
           </div>

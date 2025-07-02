@@ -1,7 +1,7 @@
 // frontend/src/contexts/AuthContext.tsx
 
 import { createContext } from 'react';
-import { AuthContextType } from '../types/auth'; // Import the AuthContextType interface
+import type { AuthContextType } from '../types/auth'; // Import the AuthContextType interface as type-only
 
 /**
  * React Context for managing authentication state.

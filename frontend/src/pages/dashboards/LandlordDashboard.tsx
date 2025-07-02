@@ -1,23 +1,24 @@
-// frontend/src/pages/dashboards/LandlordDashboard.tsx
+import React, { useState, useMemo } from 'react';
+import {
+  BarChart2, Building, Users, DollarSign, FileText, Shield,
+  FilePlus, History, User, Mail, Phone, TrendingUp as TrendingUpIcon, FileWarning
+} from 'lucide-react'; // Fixed: Added FileWarning
+import { useAuth } from '../../hooks/useAuth';
+import { useData } from '../../hooks/useData';
+import Sidebar from '../../components/common/Sidebar';
+import StatCard from '../../components/common/StatCard';
+import PropertyManagement from '../management/PropertyManagement';
+import TenantManagement from '../management/TenantManagement';
+import PaymentManagement from '../management/PaymentManagement';
+import ExpenseTracking from '../management/ExpenseTracking';
+import RentalDepositInvestment from '../management/RentalDepositInvestment';
+import Reports from '../reports/Reports';
+import AuditLogView from '../audit/AuditLogView';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell
+} from 'recharts'; // Fixed: Import BarChart explicitly
 
-import React, { useState, useMemo, useContext } from 'react';
-import { BarChart2, Building, Users, DollarSign, FileText, Shield, FilePlus, History, Briefcase, User, Mail, Phone, TrendingUp as TrendingUpIcon } from 'lucide-react'; // Import icons
-import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
-import { useData } from '../../hooks/useData'; // Import useData hook
-import Sidebar from '../../components/common/Sidebar'; // Import Sidebar component
-import StatCard from '../../components/common/StatCard'; // Import StatCard component
-import PropertyManagement from '../management/PropertyManagement'; // Import PropertyManagement page
-import TenantManagement from '../management/TenantManagement'; // Import TenantManagement page
-import PaymentManagement from '../management/PaymentManagement'; // Import PaymentManagement page
-import ExpenseTracking from '../management/ExpenseTracking'; // Import ExpenseTracking page
-import RentalDepositInvestment from '../management/RentalDepositInvestment'; // Import RentalDepositInvestment page
-import Reports from '../reports/Reports'; // Import Reports page
-import AuditLogView from '../audit/AuditLogView'; // Import AuditLogView page
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'; // Recharts components
-
-/**
- * Navigation items for the Landlord Dashboard sidebar.
- */
 const landlordNav = [
   { name: 'Dashboard', icon: BarChart2 },
   { name: 'Properties', icon: Building },
@@ -29,65 +30,38 @@ const landlordNav = [
   { name: 'Audit Log', icon: History },
 ];
 
-/**
- * LandlordDashboard component.
- * Serves as the main dashboard for landlords, integrating a sidebar
- * and rendering different content sections based on navigation.
- */
 const LandlordDashboard: React.FC = () => {
-  const [activeItem, setActiveItem] = useState('Dashboard'); // State for active sidebar item
-  const { currentUserId, userRole } = useAuth(); // Get current user ID and role
-  const { data } = useData(); // Get application data
-
-  /**
-   * Memoized value for the current landlord's data.
-   * Filters landlords based on the currentUserId.
-   */
-  const currentLandlord = useMemo(() => {
-    if (userRole === 'landlord' && currentUserId) {
-      return data.landlords.find(l => l.id === currentUserId);
-    }
-    return null;
-  }, [userRole, currentUserId, data.landlords]);
-
-  /**
-   * Renders the content section based on the active sidebar item.
-   */
-  const renderContent = () => {
-    switch (activeItem) {
-      case 'Dashboard': return <LandlordDashboardContent landlordId={currentUserId} />;
-      case 'Properties': return <PropertyManagement />;
-      case 'Tenants': return <TenantManagement />;
-      case 'Payments': return <PaymentManagement />;
-      case 'Expenses': return <ExpenseTracking />;
-      case 'Deposits': return <RentalDepositInvestment />;
-      case 'Reports': return <Reports />;
-      case 'Audit Log': return <AuditLogView />;
-      default: return <LandlordDashboardContent landlordId={currentUserId} />;
-    }
-  };
+  const [activeItem, setActiveItem] = useState('Dashboard');
+  const { currentUserId } = useAuth();
 
   return (
     <div className="flex w-full h-full">
-      {/* Sidebar component */}
       <Sidebar navigation={landlordNav} activeItem={activeItem} setActiveItem={setActiveItem} />
       <main className="flex-1 bg-gray-900 flex flex-col h-full">
-        {/* Main content area, scrollable */}
-        <div className="p-8 flex-1 overflow-y-auto">{renderContent()}</div>
+        <div className="p-8 flex-1 overflow-y-auto">
+          {(() => {
+            switch (activeItem) {
+              case 'Dashboard': return <LandlordDashboardContent landlordId={currentUserId} />;
+              case 'Properties': return <PropertyManagement />;
+              case 'Tenants': return <TenantManagement />;
+              case 'Payments': return <PaymentManagement />;
+              case 'Expenses': return <ExpenseTracking />;
+              case 'Deposits': return <RentalDepositInvestment />;
+              case 'Reports': return <Reports />;
+              case 'Audit Log': return <AuditLogView />;
+              default: return <LandlordDashboardContent landlordId={currentUserId} />;
+            }
+          })()}
+        </div>
       </main>
     </div>
   );
 };
 
-/**
- * LandlordDashboardContent component.
- * Displays the main dashboard overview for a landlord, including stats and charts.
- */
 const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ landlordId }) => {
   const { data } = useData();
   const currentLandlord = data.landlords.find(l => l.id === landlordId);
 
-  // Filter properties, tenants, payments, and expenses relevant to the current landlord
   const landlordProperties = useMemo(() => {
     if (!currentLandlord) return [];
     return data.properties.filter(p => p.landlordId === currentLandlord.id);
@@ -111,7 +85,6 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
     return data.expenses.filter(e => propIds.includes(e.propertyId));
   }, [data.expenses, landlordProperties, currentLandlord]);
 
-  // Calculate key performance indicators
   const totalIncome = landlordPayments.filter(p => p.status === 'Paid').reduce((acc, p) => acc + p.amount, 0);
   const overdueRent = landlordPayments.filter(p => p.status === 'Overdue').reduce((acc, p) => acc + p.amount, 0);
   const totalExpenses = landlordExpenses.reduce((acc, e) => acc + e.amount, 0);
@@ -119,22 +92,30 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
   const occupiedUnits = landlordTenants.length;
   const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 
-  // Dummy data for charts (replace with real data analysis from backend)
   const incomeExpenseData = [
-    { name: 'Jan', income: 125000, expenses: 40000 }, { name: 'Feb', income: 125000, expenses: 35000 },
-    { name: 'Mar', income: 125000, expenses: 52000 }, { name: 'Apr', income: 125000, expenses: 30000 },
-    { name: 'May', income: 160000, expenses: 60000 }, { name: 'Jun', income: 160000, expenses: 82000 },
+    { name: 'Jan', income: 125000, expenses: 40000 },
+    { name: 'Feb', income: 125000, expenses: 35000 },
+    { name: 'Mar', income: 125000, expenses: 52000 },
+    { name: 'Apr', income: 125000, expenses: 30000 },
+    { name: 'May', income: 160000, expenses: 60000 },
+    { name: 'Jun', income: 160000, expenses: 82000 },
   ];
-  const expenseCategories = landlordExpenses.reduce((acc, e) => {
+
+  const expenseCategories: Record<string, number> = landlordExpenses.reduce((acc: Record<string, number>, e) => {
     acc[e.category] = (acc[e.category] || 0) + e.amount;
     return acc;
   }, {});
-  const expenseData = Object.keys(expenseCategories).map(key => ({ name: key, value: expenseCategories[key] }));
+
+  const expenseData = Object.keys(expenseCategories).map(key => ({
+    name: key,
+    value: expenseCategories[key]
+  }));
+
   const PIE_COLORS = ['#06b6d4', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#a855f7'];
 
   return (
     <div className="space-y-8">
-      {/* Landlord Profile Card */}
+      {/* Profile Card */}
       {currentLandlord && (
         <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
           <h3 className="text-xl font-semibold text-white mb-4">My Profile</h3>
@@ -146,15 +127,15 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
         </div>
       )}
 
-      {/* Key Statistics Cards */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Monthly Income" value={`KES ${totalIncome.toLocaleString()}`} icon={DollarSign} color="emerald" change="+5.2%"/>
-        <StatCard title="Total Monthly Expenses" value={`KES ${totalExpenses.toLocaleString()}`} icon={FileText} color="amber" change="+12%"/>
+        <StatCard title="Total Monthly Income" value={`KES ${totalIncome.toLocaleString()}`} icon={DollarSign} color="emerald" change="+5.2%" />
+        <StatCard title="Total Monthly Expenses" value={`KES ${totalExpenses.toLocaleString()}`} icon={FileText} color="amber" change="+12%" />
         <StatCard title="Overdue Rent" value={`KES ${overdueRent.toLocaleString()}`} icon={FileWarning} color="red" />
-        <StatCard title="Occupancy Rate" value={`${occupancyRate.toFixed(1)}%`} icon={TrendingUpIcon} color="cyan" change="-1.0%"/>
+        <StatCard title="Occupancy Rate" value={`${occupancyRate.toFixed(1)}%`} icon={TrendingUpIcon} color="cyan" change="-1.0%" />
       </div>
 
-      {/* Income vs Expenses Chart and Expense Distribution Pie Chart */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3 bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
           <h3 className="text-lg font-semibold text-white mb-4">Income vs Expenses</h3>
@@ -162,11 +143,11 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
             <BarChart data={incomeExpenseData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="name" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" tickFormatter={(value) => `KES ${value/1000}k`} />
-              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#fff' }} formatter={(value) => `KES ${value.toLocaleString()}`} />
-              <Legend wrapperStyle={{ paddingTop: '16px' }} />
-              <Bar dataKey="income" fill="#14b8a6" name="Income" radius={[4, 4, 0, 0]}/>
-              <Bar dataKey="expenses" fill="#f59e0b" name="Expenses" radius={[4, 4, 0, 0]}/>
+              <YAxis stroke="#9ca3af" tickFormatter={(v) => `KES ${v / 1000}k`} />
+              <Tooltip formatter={(v: number) => `KES ${v.toLocaleString()}`} />
+              <Legend />
+              <Bar dataKey="income" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expenses" fill="#f59e0b" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -174,17 +155,31 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
           <h3 className="text-lg font-semibold text-white mb-4">Expense Distribution</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={expenseData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} fill="#8884d8" paddingAngle={5} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                {expenseData.map((entry, index) => <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
+              <Pie
+                data={expenseData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                fill="#8884d8"
+                paddingAngle={5}
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent ?? 0 * 100).toFixed(0)}%`}
+              >
+                {expenseData.map((_, index) => (
+                  <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                ))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#fff' }} formatter={(value) => `KES ${value.toLocaleString()}`}/>
-              <Legend wrapperStyle={{ paddingTop: '16px' }} />
+              <Tooltip formatter={(v: number) => `KES ${v.toLocaleString()}`} />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* My Properties Overview */}
+      {/* Properties Overview */}
       <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
         <h3 className="text-xl font-semibold text-white mb-4">My Properties Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -204,17 +199,16 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Audit Logs */}
       <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
         <h3 className="text-xl font-semibold text-white mb-4">Recent Activity</h3>
         <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
-          {data.auditLog.slice(0, 5).map(log => ( // Show last 5 audit logs
+          {data.auditLog.length > 0 ? data.auditLog.slice(0, 5).map(log => (
             <div key={log.id} className="font-mono text-sm bg-gray-700 p-3 rounded-lg border border-gray-600">
               <span className="text-cyan-400">{log.timestamp.toLocaleTimeString()}:</span>
               <span className="ml-2 text-gray-300">{log.message}</span>
             </div>
-          ))}
-          {data.auditLog.length === 0 && <p className="text-gray-400">No recent activity.</p>}
+          )) : <p className="text-gray-400">No recent activity.</p>}
         </div>
       </div>
     </div>

@@ -1,10 +1,10 @@
 // frontend/src/components/common/Header.tsx
 
 import React, { useState, useContext } from 'react';
-import { Bell, Settings, LogOut, X } from 'lucide-react'; // Import necessary icons
+import { Bell, Settings, LogOut } from 'lucide-react'; // Import necessary icons (removed X as it's not used here)
 import { DataContext } from '../../contexts/DataContext'; // Import DataContext
-import { AuthContext } from '../../contexts/AuthContext'; // Import AuthContext
-import { Notification } from '../../types/models'; // Import Notification type
+// Removed AuthContext as it's not directly used here
+import type { Notification, AppData } from '../../types/models'; // Import Notification and AppData types for explicit typing
 
 /**
  * Props interface for the Header component.
@@ -20,20 +20,21 @@ interface HeaderProps {
  * Includes a dropdown for notifications.
  */
 const Header: React.FC<HeaderProps> = ({ title, onLogout }) => {
-  const { data, setData } = useContext(DataContext);
+  // Use non-null assertion as DataContext is guaranteed to be provided by App.tsx
+  const { data, setData } = useContext(DataContext)!;
   const [showNotifications, setShowNotifications] = useState(false);
 
   // Calculate the number of unread notifications
-  const unreadCount = data.notifications.filter(n => !n.read).length;
+  const unreadCount = data.notifications.filter((n: Notification) => !n.read).length;
 
   /**
    * Marks a specific notification as read.
    * @param id The ID of the notification to mark as read.
    */
   const markAsRead = (id: number) => {
-    setData(prev => ({
+    setData((prev: AppData) => ({ // Explicitly type prev as AppData
       ...prev,
-      notifications: prev.notifications.map(n => n.id === id ? { ...n, read: true } : n)
+      notifications: prev.notifications.map((n: Notification) => n.id === id ? { ...n, read: true } : n)
     }));
   };
 
@@ -60,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ title, onLogout }) => {
               <div className="p-4 font-semibold border-b border-gray-600 text-lg text-white">Notifications</div>
               <div className="max-h-96 overflow-y-auto custom-scrollbar">
                 {data.notifications.length > 0 ? (
-                  data.notifications.map(n => (
+                  data.notifications.map((n: Notification) => ( // Explicitly type n as Notification
                     <div
                       key={n.id}
                       className={`p-4 border-b border-gray-600 ${n.read ? 'opacity-60 bg-gray-750' : 'hover:bg-gray-600'} transition-colors duration-200`}

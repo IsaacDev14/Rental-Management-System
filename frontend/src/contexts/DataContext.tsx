@@ -1,7 +1,5 @@
-// frontend/src/contexts/DataContext.tsx
-
 import { createContext } from 'react';
-import { AppData, AuditLogEntry, Notification } from '../types/models'; // Import necessary types
+import type { AppData } from '../types/models'; // Use type-only import for types
 
 /**
  * Interface for the DataContext value.

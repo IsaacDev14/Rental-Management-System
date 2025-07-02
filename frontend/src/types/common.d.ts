@@ -1,16 +1,19 @@
-// frontend/src/types/common.d.ts
+import React from 'react';
 
 /**
- * Represents a generic object with string keys and any value.
+ * Represents a generic object with string keys and unknown values.
+ * Avoids using 'any'; unknown is safer and forces type checks.
  */
 export interface AnyObject {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
  * Represents a generic function.
+ * Uses unknown[] and unknown to avoid 'any'.
+ * This enforces that callers handle return type properly.
  */
-export type GenericFunction = (...args: any[]) => any;
+export type GenericFunction = (...args: unknown[]) => unknown;
 
 /**
  * Interface for a common UI component prop that accepts a React Node.
@@ -28,6 +31,7 @@ export interface ClosableComponent {
 
 /**
  * Interface for a component that has an 'onSave' event with generic data.
+ * Generic type T to strongly type data passed on save.
  */
 export interface SavableComponent<T> {
   onSave: (data: T) => void;
@@ -65,7 +69,7 @@ export interface ReportEntry {
 export interface StatCardProps {
   title: string;
   value: string;
-  icon: React.ElementType; // For Lucide React icons
+  icon: React.ElementType; // For Lucide React icons or any React component type
   color: 'cyan' | 'teal' | 'emerald' | 'amber' | 'red' | 'blue';
   change?: string;
 }

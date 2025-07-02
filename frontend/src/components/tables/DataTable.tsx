@@ -1,81 +1,61 @@
-// frontend/src/components/tables/DataTable.tsx
-
+// src/components/tables/DataTable.tsx
 import React from 'react';
 
-/**
- * Defines the structure for a column in the DataTable.
- */
-interface TableColumn<T> {
-  key: keyof T | string; // Key to access data, or a unique string for custom cells
-  header: string; // Display header for the column
-  render?: (row: T) => React.ReactNode; // Optional custom render function for cell content
-  className?: string; // Optional CSS class for the column header and cells
+export interface Column<T> {
+  key: string;
+  header: string;
+  className?: string;
+  render?: (row: T) => React.ReactNode;
 }
 
-/**
- * Props interface for the DataTable component.
- */
 interface DataTableProps<T> {
-  data: T[]; // Array of data objects to display
-  columns: TableColumn<T>[]; // Array of column definitions
-  emptyMessage?: string; // Message to display when data is empty
+  data: T[];
+  columns: Column<T>[];
+  emptyMessage?: string;
 }
 
-/**
- * A generic and reusable DataTable component for displaying tabular data.
- * Supports custom rendering for columns and displays a message when no data is available.
- */
-const DataTable = <T extends Record<string, any>>({
-  data,
-  columns,
-  emptyMessage = 'No data available.',
-}: DataTableProps<T>) => {
+function DataTable<T extends object>({ data, columns, emptyMessage }: DataTableProps<T>) {
+  if (data.length === 0) {
+    return (
+      <div className="text-gray-400 italic p-4 text-center">
+        {emptyMessage || 'No data available.'}
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto custom-scrollbar rounded-lg border border-gray-700 shadow-md">
-      <table className="w-full text-left table-auto">
-        {/* Table Header */}
-        <thead className="bg-gray-700">
-          <tr>
-            {columns.map((column, index) => (
-              <th
-                key={column.key as string || index} // Use key or index for unique key
-                className={`p-4 text-gray-300 font-semibold text-sm uppercase tracking-wider ${column.className || ''}`}
+    <table className="w-full text-left border-collapse border border-gray-700">
+      <thead>
+        <tr>
+          {columns.map(col => (
+            <th
+              key={col.key}
+              className={`border border-gray-700 px-4 py-2 bg-gray-900 text-white ${col.className || ''}`}
+            >
+              {col.header}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row, rowIndex) => (
+          <tr
+            key={rowIndex}
+            className={rowIndex % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700'}
+          >
+            {columns.map(col => (
+              <td
+                key={col.key}
+                className={`border border-gray-700 px-4 py-2 text-gray-200`}
               >
-                {column.header}
-              </th>
+                {col.render ? col.render(row) : (row as any)[col.key]}
+              </td>
             ))}
           </tr>
-        </thead>
-        {/* Table Body */}
-        <tbody>
-          {data.length > 0 ? (
-            data.map((row, rowIndex) => (
-              <tr
-                key={row.id || rowIndex} // Use row.id if available, otherwise rowIndex
-                className="border-b border-gray-700 hover:bg-gray-700 transition-colors duration-200"
-              >
-                {columns.map((column, colIndex) => (
-                  <td
-                    key={`${column.key as string}-${rowIndex}-${colIndex}`} // Unique key for cell
-                    className={`p-4 text-gray-300 ${column.className || ''}`}
-                  >
-                    {/* Render custom content if a render function is provided, otherwise display data directly */}
-                    {column.render ? column.render(row) : (row[column.key as keyof T] || 'N/A')}
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={columns.length} className="p-8 text-center text-gray-400 text-lg">
-                {emptyMessage}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
-};
+}
 
 export default DataTable;

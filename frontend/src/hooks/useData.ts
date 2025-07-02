@@ -2,7 +2,7 @@
 
 import { useContext } from 'react';
 import { DataContext } from '../contexts/DataContext'; // Import DataContext
-import { AppData } from '../types/models'; // Import AppData for type consistency
+import type { AppData } from '../types/models';
 
 /**
  * Interface for the DataContext value.

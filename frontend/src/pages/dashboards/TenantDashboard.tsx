@@ -1,13 +1,13 @@
 // frontend/src/pages/dashboards/TenantDashboard.tsx
 
-import React, { useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, AlertTriangle, User, Mail, Phone, Receipt, ClipboardList, MessageSquare, MapPin } from 'lucide-react'; // Import icons
 import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
 import { useData } from '../../hooks/useData'; // Import useData hook
 import Modal from '../../components/ui/Modal'; // Import Modal component
 import ImageCarousel from '../../components/common/ImageCarousel'; // Import ImageCarousel component
-import { getUnsplashImageUrl, getLeaseStatus } from '../../utils/helpers'; // Import helper functions
-import { Payment } from '../../types/models'; // Import Payment type
+import { getLeaseStatus } from '../../utils/helpers'; // Import helper functions (removed getUnsplashImageUrl as it's not used directly here)
+import type { Payment, Tenant, Property, Unit } from '../../types/models'; // Import Payment, Tenant, Property, Unit types as type-only
 
 /**
  * TenantDashboard component.
@@ -15,10 +15,12 @@ import { Payment } from '../../types/models'; // Import Payment type
  * payment history, and available properties.
  */
 const TenantDashboard: React.FC = () => {
+  // Correctly use the custom hooks to get context values
   const { data } = useData();
   const { currentUserId, login } = useAuth();
 
-  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(currentUserId || data.tenants[0]?.id);
+  // Initialize selectedTenantId based on currentUserId or the first dummy tenant
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(currentUserId || (data.tenants.length > 0 ? data.tenants[0].id : null));
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedPaymentForReceipt, setSelectedPaymentForReceipt] = useState<Payment | null>(null);
 
@@ -31,28 +33,28 @@ const TenantDashboard: React.FC = () => {
 
   // Get the currently selected tenant's data
   const currentTenant = useMemo(() => {
-    return data.tenants.find(t => t.id === selectedTenantId);
+    return data.tenants.find((t: Tenant) => t.id === selectedTenantId);
   }, [selectedTenantId, data.tenants]);
 
   // Get property and unit details for the current tenant
   const myProperty = useMemo(() => {
-    return data.properties.find(p => p.id === currentTenant?.propertyId);
+    return data.properties.find((p: Property) => p.id === currentTenant?.propertyId);
   }, [currentTenant, data.properties]);
 
   const myUnit = useMemo(() => {
-    return myProperty?.units.find(u => u.id === currentTenant?.unitId);
+    return myProperty?.units.find((u: Unit) => u.id === currentTenant?.unitId);
   }, [currentTenant, myProperty]);
 
   // Filter payments for the current tenant
   const myPayments = useMemo(() => {
-    return data.payments.filter(p => p.tenantId === currentTenant?.id);
+    return data.payments.filter((p: Payment) => p.tenantId === currentTenant?.id);
   }, [currentTenant, data.payments]);
 
   // Prepare data for available properties to explore
   const availableProperties = useMemo(() => {
-    return data.properties.map(prop => {
-      const vacantUnits = prop.units.filter(unit => !unit.tenantId);
-      const occupiedUnits = prop.units.filter(unit => unit.tenantId);
+    return data.properties.map((prop: Property) => {
+      const vacantUnits = prop.units.filter((unit: Unit) => !unit.tenantId);
+      const occupiedUnits = prop.units.filter((unit: Unit) => unit.tenantId);
       return {
         ...prop,
         vacantUnits,
@@ -91,9 +93,12 @@ const TenantDashboard: React.FC = () => {
           <AlertTriangle size={64} className="text-amber-500 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-white">No Tenant Selected or Found</h3>
           <p className="text-gray-400 mt-2 mb-4">Please log in as a tenant or ensure a tenant ID is set.</p>
-          <button onClick={() => login('tenant', data.tenants[0].id)} className="mt-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white font-bold py-2.5 px-5 rounded-lg shadow-md transition-all duration-200">
-            Login as first dummy tenant
-          </button>
+          {/* Only show button if there are dummy tenants to log in with */}
+          {data.tenants.length > 0 && (
+            <button onClick={() => login('tenant', data.tenants[0].id)} className="mt-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white font-bold py-2.5 px-5 rounded-lg shadow-md transition-all duration-200">
+              Login as first dummy tenant
+            </button>
+          )}
         </div>
       </div>
     );
@@ -138,7 +143,7 @@ const TenantDashboard: React.FC = () => {
               onChange={e => setSelectedTenantId(e.target.value)}
               className="block w-full pl-4 pr-10 py-3 text-base bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 rounded-lg text-white appearance-none transition-all duration-200"
             >
-              {data.tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {data.tenants.map((t: Tenant) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
             <ChevronDown className="absolute right-3 top-[calc(1.5rem+10px)] -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
           </div>
@@ -176,7 +181,7 @@ const TenantDashboard: React.FC = () => {
           <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
             <h3 className="text-xl font-semibold mb-4 text-white">Payment History</h3>
             <div className="space-y-3 max-h-48 overflow-y-auto custom-scrollbar pr-2">
-              {myPayments.length > 0 ? myPayments.map(p => (
+              {myPayments.length > 0 ? myPayments.map((p: Payment) => ( // Explicitly type p
                 <div key={p.id} className="flex justify-between items-center py-2 border-b border-gray-700 last:border-b-0">
                   <span className="text-sm text-gray-300">{p.date}</span>
                   <span className="font-semibold text-white">KES {p.amount.toLocaleString()}</span>
@@ -215,7 +220,7 @@ const TenantDashboard: React.FC = () => {
         <div className="mt-8 bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
           <h3 className="text-xl font-semibold mb-6 text-white">Explore Available Properties & Units</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableProperties.map(prop => (
+            {availableProperties.map((prop: Property) => ( // Explicitly type prop
               <div key={prop.id} className="bg-gray-700 rounded-xl shadow-md overflow-hidden flex flex-col border border-gray-600 transition-all duration-300 hover:shadow-lg hover:border-cyan-500/50">
                 {/* Property Images Carousel */}
                 <ImageCarousel images={prop.images} />
@@ -239,7 +244,7 @@ const TenantDashboard: React.FC = () => {
                   <div className="mt-2 flex-1">
                     <h5 className="text-md font-semibold text-gray-200 mb-2">Units:</h5>
                     <div className="space-y-2">
-                      {prop.units.map(unit => (
+                      {prop.units.map((unit: Unit) => ( // Explicitly type unit
                         <div key={unit.id} className="flex justify-between items-center text-sm bg-gray-600 p-3 rounded-lg border border-gray-500">
                           <span className="font-medium text-white">{unit.name} ({unit.type})</span>
                           {unit.tenantId ? (

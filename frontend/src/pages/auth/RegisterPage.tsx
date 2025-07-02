@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react'; // Import icon for dropdown
 import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
-import { UserRole } from '../../types/auth'; // Import UserRole type
-import { initialData as dummyInitialData } from '../../utils/data'; // Import dummy data for user IDs
+import type { UserRole } from '../../types/auth';import { initialData as dummyInitialData } from '../../utils/data'; // Import dummy data for user IDs
 
 /**
  * Props interface for the RegisterPage component.

@@ -1,16 +1,14 @@
-// frontend/src/pages/management/TenantManagement.tsx
-
-import React, { useState, useMemo, useContext, useEffect } from 'react';
-import { PlusCircle, Edit, Trash2, Search, ChevronDown, Mail, Phone, AlertTriangle } from 'lucide-react'; // Import icons
-import { useData } from '../../hooks/useData'; // Import useData hook
-import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
-import Modal from '../../components/ui/Modal'; // Import Modal component
-import InputField from '../../components/ui/InputField'; // Import InputField component
-import SelectField from '../../components/ui/SelectField'; // Import SelectField component
-import Button from '../../components/ui/Button'; // Import Button component
-import DataTable from '../../components/tables/DataTable'; // Import DataTable component
-import { Tenant, Property, Unit } from '../../types/models'; // Import Tenant, Property, Unit types
-import { getLeaseStatus } from '../../utils/helpers'; // Import helper for lease status
+import React, { useState, useMemo, useEffect } from 'react';
+import { PlusCircle, Edit, Trash2, Search, ChevronDown, Mail, Phone, AlertTriangle } from 'lucide-react';
+import { useData } from '../../hooks/useData';
+import { useAuth } from '../../hooks/useAuth';
+import Modal from '../../components/ui/Modal';
+import InputField from '../../components/ui/InputField';
+import SelectField from '../../components/ui/SelectField';
+import Button from '../../components/ui/Button';
+import DataTable from '../../components/tables/DataTable';
+import type { Tenant, Property } from '../../types/models';
+import { getLeaseStatus } from '../../utils/helpers';
 
 /**
  * TenantManagement component.
@@ -19,7 +17,7 @@ import { getLeaseStatus } from '../../utils/helpers'; // Import helper for lease
  */
 const TenantManagement: React.FC = () => {
   const { data, setData, logAction, sendNotification } = useData();
-  const { currentUserId } = useAuth(); // Get the current landlord's ID
+  const { currentUserId } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
@@ -28,18 +26,18 @@ const TenantManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Ending Soon' | 'Expired'>('All');
 
-  // Filter properties to show only those belonging to the current landlord
+  // Properties belonging to current landlord
   const landlordProperties = useMemo(() => {
     return data.properties.filter(p => p.landlordId === currentUserId);
   }, [data.properties, currentUserId]);
 
-  // Filter tenants to show only those associated with the current landlord's properties
+  // Tenants belonging to landlord's properties
   const landlordTenants = useMemo(() => {
     const propIds = landlordProperties.map(p => p.id);
     return data.tenants.filter(t => propIds.includes(t.propertyId));
   }, [data.tenants, landlordProperties]);
 
-  // Filtered tenants based on search term and status
+  // Filter tenants by search and lease status
   const filteredTenants = useMemo(() => {
     let tenants = landlordTenants;
 
@@ -58,44 +56,33 @@ const TenantManagement: React.FC = () => {
     return tenants;
   }, [landlordTenants, searchTerm, filterStatus]);
 
-  /**
-   * Handles adding a new tenant.
-   * Opens the modal in add mode.
-   */
+  // Open modal for adding new tenant
   const handleAddTenantClick = () => {
     setEditingTenant(null);
     setIsModalOpen(true);
   };
 
-  /**
-   * Handles editing an existing tenant.
-   * Opens the modal in edit mode with the selected tenant's data.
-   * @param tenant The tenant object to edit.
-   */
+  // Open modal for editing existing tenant
   const handleEditTenantClick = (tenant: Tenant) => {
     setEditingTenant(tenant);
     setIsModalOpen(true);
   };
 
-  /**
-   * Handles saving a new or updated tenant.
-   * Updates the global data state and logs the action.
-   * @param tenantData The data of the tenant to save.
-   */
+  // Save new or updated tenant
   const handleSaveTenant = (tenantData: Tenant) => {
     setData(prev => {
       let updatedTenants = [...prev.tenants];
-      let updatedProperties = [...prev.properties];
+      const updatedProperties = [...prev.properties];
 
       if (editingTenant) {
-        // If editing, first unassign the tenant from their old unit if it changed
+        // Unassign tenant from old unit if unit changed
         const oldProperty = prev.properties.find(p => p.id === editingTenant.propertyId);
         const oldUnit = oldProperty?.units.find(u => u.id === editingTenant.unitId);
         if (oldUnit && oldUnit.tenantId === editingTenant.id && oldUnit.id !== tenantData.unitId) {
-          oldUnit.tenantId = null; // Mark old unit as vacant
+          oldUnit.tenantId = null;
         }
 
-        // Update the tenant record
+        // Update tenant record
         updatedTenants = updatedTenants.map(t => t.id === tenantData.id ? tenantData : t);
         logAction(`Updated tenant: ${tenantData.name}`);
       } else {
@@ -105,48 +92,40 @@ const TenantManagement: React.FC = () => {
         sendNotification(`New tenant "${tenantData.name}" added.`);
       }
 
-      // Assign the tenant to their new unit
+      // Assign tenant to new unit
       const newProperty = updatedProperties.find(p => p.id === tenantData.propertyId);
       const newUnit = newProperty?.units.find(u => u.id === tenantData.unitId);
       if (newUnit) {
         newUnit.tenantId = tenantData.id;
       }
 
-      // Ensure properties array is updated with modified units
+      // Update properties with modified units
       return {
         ...prev,
         tenants: updatedTenants,
         properties: updatedProperties.map(p => ({
           ...p,
-          units: p.id === newProperty?.id ? newProperty.units : p.units // Update units only for the affected property
+          units: p.id === newProperty?.id ? newProperty.units : p.units
         }))
       };
     });
+
     setIsModalOpen(false);
     setEditingTenant(null);
   };
 
-  /**
-   * Handles initiating tenant deletion.
-   * @param tenant The tenant object to delete.
-   */
+  // Prepare deletion of tenant
   const handleDeleteTenantClick = (tenant: Tenant) => {
     setTenantToDelete(tenant);
     setIsDeleteConfirmOpen(true);
   };
 
-  /**
-   * Performs the actual deletion of a tenant.
-   * Removes the tenant and unassigns them from their unit.
-   */
+  // Delete tenant and unassign from unit
   const performDeleteTenant = () => {
     if (tenantToDelete) {
       setData(prev => {
-        // Find the property and unit the tenant was assigned to
         const propertyOfTenant = prev.properties.find(p => p.id === tenantToDelete.propertyId);
         const unitOfTenant = propertyOfTenant?.units.find(u => u.id === tenantToDelete.unitId);
-        
-        // If found, unassign the tenant from the unit
         if (unitOfTenant) {
           unitOfTenant.tenantId = null;
         }
@@ -156,8 +135,8 @@ const TenantManagement: React.FC = () => {
 
         return {
           ...prev,
-          tenants: prev.tenants.filter(t => t.id !== tenantToDelete.id), // Remove the tenant
-          properties: prev.properties.map(p => ({ // Update properties with modified units
+          tenants: prev.tenants.filter(t => t.id !== tenantToDelete.id),
+          properties: prev.properties.map(p => ({
             ...p,
             units: p.id === propertyOfTenant?.id ? propertyOfTenant.units : p.units
           }))
@@ -168,10 +147,7 @@ const TenantManagement: React.FC = () => {
     }
   };
 
-  /**
-   * TenantForm component (nested for simplicity, could be separate file).
-   * Form for adding/editing tenant details.
-   */
+  // Tenant form component (nested for simplicity)
   const TenantForm: React.FC<{ tenant: Tenant | null; onSave: (data: Tenant) => void; onCancel: () => void; properties: Property[] }> = ({ tenant, onSave, onCancel, properties }) => {
     const [formData, setFormData] = useState<Tenant>(() => tenant || {
       id: `t${Date.now()}`,
@@ -183,9 +159,9 @@ const TenantManagement: React.FC = () => {
       propertyId: '',
       unitId: '',
     });
+
     const [errors, setErrors] = useState<{ [key: string]: string | undefined }>({});
 
-    // Update form data if editingTenant changes
     useEffect(() => {
       if (tenant) {
         setFormData(tenant);
@@ -201,14 +177,12 @@ const TenantManagement: React.FC = () => {
           unitId: '',
         });
       }
-      setErrors({}); // Clear errors on form open/reset
+      setErrors({});
     }, [tenant]);
 
-    // Filter available units based on selected property and occupancy
     const availableUnits = useMemo(() => {
       const selectedProp = properties.find(p => p.id === formData.propertyId);
       if (!selectedProp) return [];
-      // Include the current tenant's assigned unit if editing
       return selectedProp.units.filter(unit =>
         !unit.tenantId || (tenant && unit.tenantId === tenant.id)
       );
@@ -216,7 +190,7 @@ const TenantManagement: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { id, value } = e.target;
-      setFormData(prev => ({ ...prev, [id]: value } as Tenant)); // Type assertion needed here
+      setFormData(prev => ({ ...prev, [id]: value } as Tenant));
       setErrors(prev => ({ ...prev, [id]: undefined }));
     };
 
@@ -233,7 +207,6 @@ const TenantManagement: React.FC = () => {
       }
       if (!formData.propertyId) newErrors.propertyId = 'Property is required.';
       if (!formData.unitId) newErrors.unitId = 'Unit is required.';
-      
       return newErrors;
     };
 
@@ -253,32 +226,29 @@ const TenantManagement: React.FC = () => {
         <InputField id="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} error={errors.phone} required />
         <InputField id="leaseStart" type="date" label="Lease Start Date" value={formData.leaseStart} onChange={handleChange} error={errors.leaseStart} required />
         <InputField id="leaseEnd" type="date" label="Lease End Date" value={formData.leaseEnd} onChange={handleChange} error={errors.leaseEnd} required />
-        
         <SelectField
-            id="propertyId"
-            label="Property"
-            value={formData.propertyId}
-            onChange={(e) => {
-                handleChange(e);
-                setFormData(prev => ({ ...prev, unitId: '' })); // Reset unit when property changes
-            }}
-            error={errors.propertyId}
-            options={properties.map(p => ({ value: p.id, label: p.name }))}
-            required
+          id="propertyId"
+          label="Property"
+          value={formData.propertyId}
+          onChange={(e) => {
+            handleChange(e);
+            setFormData(prev => ({ ...prev, unitId: '' }));
+          }}
+          error={errors.propertyId}
+          options={properties.map(p => ({ value: p.id, label: p.name }))}
+          required
         />
-
         <SelectField
-            id="unitId"
-            label="Unit"
-            value={formData.unitId}
-            onChange={handleChange}
-            error={errors.unitId}
-            options={availableUnits.map(u => ({ value: u.id, label: `${u.name} (${u.type}) - KES ${u.rent.toLocaleString()}` }))}
-            disabled={!formData.propertyId || availableUnits.length === 0}
-            required
-            placeholder={!formData.propertyId ? "Select a property first" : (availableUnits.length === 0 ? "No vacant units available" : "Select Unit")}
+          id="unitId"
+          label="Unit"
+          value={formData.unitId}
+          onChange={handleChange}
+          error={errors.unitId}
+          options={availableUnits.map(u => ({ value: u.id, label: `${u.name} (${u.type}) - KES ${u.rent.toLocaleString()}` }))}
+          disabled={!formData.propertyId || availableUnits.length === 0}
+          required
+          placeholder={!formData.propertyId ? "Select a property first" : (availableUnits.length === 0 ? "No vacant units available" : "Select Unit")}
         />
-
         <div className="flex justify-end space-x-4 pt-4">
           <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
           <Button type="submit" variant="primary">{tenant ? "Update Tenant" : "Add Tenant"}</Button>
@@ -287,17 +257,16 @@ const TenantManagement: React.FC = () => {
     );
   };
 
-  /**
-   * DeleteConfirmationModal component (nested for simplicity).
-   * Generic modal for confirming deletion actions.
-   */
+  // Delete confirmation modal
   const DeleteConfirmationModal: React.FC<{ isOpen: boolean; onClose: () => void; onConfirm: () => void; itemType: string; itemName: string | undefined }> = ({ isOpen, onClose, onConfirm, itemType, itemName }) => {
     if (!isOpen) return null;
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={`Confirm Delete ${itemType}`}>
         <div className="p-4 text-center">
           <AlertTriangle size={64} className="text-red-500 mx-auto mb-6" />
-          <p className="text-lg text-white mb-8">Are you sure you want to delete {itemType} <span className="font-bold text-red-400">"{itemName}"</span>? This action cannot be undone.</p>
+          <p className="text-lg text-white mb-8">
+            Are you sure you want to delete {itemType} <span className="font-bold text-red-400">"{itemName}"</span>? This action cannot be undone.
+          </p>
           <div className="flex justify-center space-x-4">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             <Button variant="danger" onClick={onConfirm}>Delete</Button>
@@ -307,7 +276,7 @@ const TenantManagement: React.FC = () => {
     );
   };
 
-  // Define columns for the DataTable
+  // Columns for tenants DataTable
   const tenantTableColumns = useMemo(() => [
     { key: 'name', header: 'Name', className: 'font-semibold text-white' },
     {
@@ -324,8 +293,8 @@ const TenantManagement: React.FC = () => {
       header: 'Contact',
       render: (row: Tenant) => (
         <div className="flex flex-col space-y-1">
-          <span className="flex items-center text-gray-300"><Mail size={14} className="mr-2 text-gray-500"/>{row.email}</span>
-          <span className="flex items-center text-gray-300"><Phone size={14} className="mr-2 text-gray-500"/>{row.phone}</span>
+          <span className="flex items-center text-gray-300"><Mail size={14} className="mr-2 text-gray-500" />{row.email}</span>
+          <span className="flex items-center text-gray-300"><Phone size={14} className="mr-2 text-gray-500" />{row.phone}</span>
         </div>
       ),
     },
@@ -362,7 +331,7 @@ const TenantManagement: React.FC = () => {
         </div>
       ),
     },
-  ], [data.properties]); // Re-memoize if properties change to update property/unit names
+  ], [data.properties]);
 
   return (
     <>
@@ -372,7 +341,7 @@ const TenantManagement: React.FC = () => {
           tenant={editingTenant}
           onSave={handleSaveTenant}
           onCancel={() => setIsModalOpen(false)}
-          properties={landlordProperties} // Pass only landlord's properties
+          properties={landlordProperties}
         />
       </Modal>
 

@@ -1,55 +1,47 @@
-// frontend/src/components/common/Sidebar.tsx
-
 import React, { useContext, useMemo } from 'react';
-import { LogOut, User, Briefcase, Shield, Building, Users, DollarSign, FileText, FilePlus, History } from 'lucide-react'; // Import necessary icons
-import { AuthContext } from '../../contexts/AuthContext'; // Import AuthContext
-import { UserRole } from '../../types/auth'; // Import UserRole type
+import { LogOut } from 'lucide-react';
+import { AuthContext } from '../../contexts/AuthContext';
 
-/**
- * Defines the structure for a navigation item in the sidebar.
- */
+// Removed unused import: import type { UserRole } from '../../types/auth';
+
 interface NavItem {
   name: string;
-  icon: React.ElementType; // For Lucide React icons
+  icon: React.ElementType;
 }
 
-/**
- * Props interface for the Sidebar component.
- */
 interface SidebarProps {
-  navigation: NavItem[]; // Array of navigation items to display
-  activeItem: string; // The currently active navigation item
-  setActiveItem: (itemName: string) => void; // Callback to set the active item
+  navigation: NavItem[];
+  activeItem: string;
+  setActiveItem: (itemName: string) => void;
 }
 
-/**
- * Reusable Sidebar component for the application layout.
- * Displays navigation links, a user profile section, and a logout button.
- * The navigation items are passed as props, allowing for dynamic menus.
- */
 const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem }) => {
-  const { userRole, logout } = useContext(AuthContext);
+  const { userRole, logout } = useContext(AuthContext)!;
 
-  // Determine the display name for the user based on their role
   const DUMMY_USER = useMemo(() => {
-    // In a real app, you'd fetch the actual user's name from a user profile state/context
-    return { fullName: 'Current User', role: userRole };
+    let fullName = 'Current User';
+    if (userRole === 'landlord') fullName = 'Landlord Demo';
+    if (userRole === 'tenant') fullName = 'Tenant Demo';
+    if (userRole === 'kra_officer') fullName = 'KRA Officer';
+
+    return { fullName, role: userRole };
   }, [userRole]);
 
   return (
     <div className="w-64 bg-gray-800 text-gray-300 flex flex-col flex-shrink-0 border-r border-gray-700 shadow-xl">
-      {/* Application Logo */}
       <div className="h-20 flex items-center px-6 border-b border-gray-700">
         <h1 className="text-2xl font-bold text-cyan-400">RentalFlow</h1>
       </div>
 
-      {/* Navigation Links */}
       <nav className="flex-1 px-4 py-6 space-y-2">
         {navigation.map((item) => (
           <a
             key={item.name}
             href="#"
-            onClick={(e) => { e.preventDefault(); setActiveItem(item.name); }}
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveItem(item.name);
+            }}
             className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200
               ${activeItem === item.name ? 'bg-cyan-600 text-white shadow-lg' : 'hover:bg-gray-700 hover:text-white'}`}
           >
@@ -59,7 +51,6 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem
         ))}
       </nav>
 
-      {/* User Profile and Logout Section */}
       <div className="px-4 py-6 border-t border-gray-700">
         <div className="flex items-center mb-4">
           <div className="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center font-bold text-white text-lg">

@@ -1,48 +1,31 @@
-// frontend/src/pages/auth/LoginPage.tsx
-
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react'; // Import icon for dropdown
-import { useAuth } from '../../hooks/useAuth'; // Import useAuth hook
-import { UserRole } from '../../types/auth'; // Import UserRole type
-import { initialData as dummyInitialData } from '../../utils/data'; // Import dummy data for user IDs
+import { ChevronDown } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import type { UserRole } from '../../types/auth';  // type-only import
+import { initialData as dummyInitialData } from '../../utils/data'; // Ensure this exists in utils/data.ts
 
-/**
- * Props interface for the LoginPage component.
- */
 interface LoginPageProps {
-  onRegisterClick: () => void; // Callback to switch to the registration page
+  onRegisterClick: () => void;
 }
 
-/**
- * LoginPage component for user authentication.
- * Allows users to "log in" by selecting a role (Landlord, Tenant, KRA Officer)
- * and provides a link to the registration page.
- * (Note: Credentials are not validated in this demo.)
- */
 const LoginPage: React.FC<LoginPageProps> = ({ onRegisterClick }) => {
   const { login } = useAuth();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('landlord'); // Default role
+  const [selectedRole, setSelectedRole] = useState<UserRole>('landlord');
 
-  /**
-   * Handles the login form submission.
-   * Based on the selected role, it calls the login function from AuthContext
-   * with a dummy user ID for demonstration purposes.
-   */
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     let userId: string | null = null;
 
-    // Assign a dummy user ID based on the selected role for demo purposes
     if (selectedRole === 'tenant' && dummyInitialData.tenants.length > 0) {
-      userId = dummyInitialData.tenants[0].id; // Use the first dummy tenant
+      userId = dummyInitialData.tenants[0].id;
     } else if (selectedRole === 'landlord' && dummyInitialData.landlords.length > 0) {
-      userId = dummyInitialData.landlords[0].id; // Use the first dummy landlord
+      userId = dummyInitialData.landlords[0].id;
     }
-    // KRA Officer doesn't need a specific ID in this demo, as it's a generic view
+    // KRA Officer has no specific ID in demo
 
-    login(selectedRole, userId); // Call login from AuthContext
+    login(selectedRole, userId);
   };
 
   return (
@@ -50,9 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onRegisterClick }) => {
       <div className="max-w-md w-full space-y-8 bg-gray-800 p-10 rounded-2xl shadow-2xl border border-gray-700">
         <div className="text-center">
           <h1 className="text-4xl font-extrabold text-cyan-400 mb-2">RentalFlow</h1>
-          <h2 className="text-2xl font-bold text-white">
-            Sign in to your account
-          </h2>
+          <h2 className="text-2xl font-bold text-white">Sign in to your account</h2>
           <p className="mt-2 text-sm text-gray-400">
             For demonstration, credentials are not validated.
           </p>

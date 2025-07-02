@@ -1,8 +1,6 @@
-// frontend/src/components/ui/SelectField.tsx
-
 import React from 'react';
 import { ChevronDown } from 'lucide-react'; // Import the dropdown icon
-import { SelectOption } from '../../types/common'; // Import SelectOption type
+import type { SelectOption } from '../../types/common'; // Import SelectOption as type-only
 
 /**
  * Props interface for the SelectField component.

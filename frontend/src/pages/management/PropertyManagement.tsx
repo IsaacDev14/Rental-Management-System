@@ -1,461 +1,399 @@
+// src/pages/PropertyManagement.tsx
+
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  PlusCircle,
-  Edit,
-  Trash2,
-  Search,
-  ChevronDown,
-  Mail,
-  Phone,
-  AlertTriangle,
-  Info,
-  X,
-} from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Plus, X } from 'lucide-react';
 import { useData } from '../../hooks/useData';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/ui/Modal';
 import InputField from '../../components/ui/InputField';
-import SelectField from '../../components/ui/SelectField';
 import Button from '../../components/ui/Button';
-import DataTable from '../../components/tables/DataTable';
-import type { Tenant, Property } from '../../types/models';
-import { getLeaseStatus } from '../../utils/helpers';
+import type { Property, Unit } from '../../types/models';
 
-/**
- * TenantManagement component.
- * Allows landlords to add, view, edit, and delete tenant records.
- * Includes search and filter functionalities for tenants.
- */
-const TenantManagement: React.FC = () => {
-  const { data, setData, logAction, sendNotification } = useData();
+const PropertyManagement: React.FC = () => {
+  const {
+    data,
+    setData,
+    logAction,
+    sendNotification,
+    fetchProperties,
+    addProperty,
+  } = useData();
+
   const { currentUserId } = useAuth();
 
-  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
-  // Filters and selection
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Ending Soon' | 'Expired'>('All');
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
 
-  // Filter properties belonging to the current landlord
   const landlordProperties = useMemo(() => {
     return data.properties.filter(p => p.landlordId === currentUserId);
   }, [data.properties, currentUserId]);
 
-  // Filter tenants belonging to landlord's properties
-  const landlordTenants = useMemo(() => {
-    const propIds = landlordProperties.map(p => p.id);
-    return data.tenants.filter(t => propIds.includes(t.propertyId));
-  }, [data.tenants, landlordProperties]);
-
-  // Filter tenants by search term and lease status
-  const filteredTenants = useMemo(() => {
-    let tenants = landlordTenants;
-
-    if (searchTerm) {
-      tenants = tenants.filter(t =>
-        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.phone.includes(searchTerm)
-      );
-    }
-
-    if (filterStatus !== 'All') {
-      tenants = tenants.filter(t => getLeaseStatus(t.leaseEnd) === filterStatus);
-    }
-
-    return tenants;
-  }, [landlordTenants, searchTerm, filterStatus]);
-
-  // Open modal for adding tenant
-  const handleAddTenantClick = () => {
-    setEditingTenant(null);
-    setIsModalOpen(true);
-  };
-
-  // Open modal for editing tenant
-  const handleEditTenantClick = (tenant: Tenant) => {
-    setEditingTenant(tenant);
-    setIsModalOpen(true);
-  };
-
-  // Save tenant (add or update)
-  const handleSaveTenant = (tenantData: Tenant) => {
-    setData(prev => {
-      let updatedTenants = [...prev.tenants];
-      const updatedProperties = [...prev.properties];
-
-      if (editingTenant) {
-        // Unassign tenant from old unit if unit changed
-        const oldProperty = prev.properties.find(p => p.id === editingTenant.propertyId);
-        const oldUnit = oldProperty?.units.find(u => u.id === editingTenant.unitId);
-        if (oldUnit && oldUnit.tenantId === editingTenant.id && oldUnit.id !== tenantData.unitId) {
-          oldUnit.tenantId = null;
-        }
-
-        // Update tenant record
-        updatedTenants = updatedTenants.map(t => t.id === tenantData.id ? tenantData : t);
-        logAction(`Updated tenant: ${tenantData.name}`);
-      } else {
-        // Add new tenant
-        updatedTenants.push(tenantData);
-        logAction(`Added new tenant: ${tenantData.name}`);
-        sendNotification(`New tenant "${tenantData.name}" added.`);
-      }
-
-      // Assign tenant to new unit
-      const newProperty = updatedProperties.find(p => p.id === tenantData.propertyId);
-      const newUnit = newProperty?.units.find(u => u.id === tenantData.unitId);
-      if (newUnit) {
-        newUnit.tenantId = tenantData.id;
-      }
-
-      // Update properties with modified units
-      return {
+  const handleSaveProperty = async (propertyData: {
+    name: string;
+    location: string;
+    imageUrl: string;
+    units: Unit[];
+  }) => {
+    if (editingProperty) {
+      logAction(`Updated property (local): ${propertyData.name}`);
+      setData(prev => ({
         ...prev,
-        tenants: updatedTenants,
-        properties: updatedProperties.map(p => (p.id === newProperty?.id ? newProperty : p))
+        properties: prev.properties.map(p =>
+          p.id === editingProperty.id
+            ? {
+                ...p,
+                name: propertyData.name,
+                location: propertyData.location,
+                images: [propertyData.imageUrl],
+                units: propertyData.units,
+              }
+            : p
+        ),
+      }));
+    } else {
+      const newProperty = {
+        name: propertyData.name,
+        location: propertyData.location,
+        images: [propertyData.imageUrl],
+        landlordId: currentUserId || 'l1',
+        coordinates: { lat: 0, lng: 0 },
+        units: propertyData.units,
       };
-    });
+
+      await addProperty(newProperty);
+      await fetchProperties(); // 🔁 Re-fetch to ensure the new property is visible after refresh
+    }
 
     setIsModalOpen(false);
-    setEditingTenant(null);
+    setEditingProperty(null);
   };
 
-  // Prepare deletion of tenant
-  const handleDeleteTenantClick = (tenant: Tenant) => {
-    setTenantToDelete(tenant);
+  const handleEditPropertyClick = (property: Property) => {
+    setEditingProperty(property);
+    setIsModalOpen(true);
+  };
+
+  const handleDeletePropertyClick = (property: Property) => {
+    setPropertyToDelete(property);
     setIsDeleteConfirmOpen(true);
   };
 
-  // Delete tenant and unassign unit
-  const performDeleteTenant = () => {
-    if (tenantToDelete) {
+  const performDeleteProperty = () => {
+    if (propertyToDelete) {
       setData(prev => {
-        const propertyOfTenant = prev.properties.find(p => p.id === tenantToDelete.propertyId);
-        const unitOfTenant = propertyOfTenant?.units.find(u => u.id === tenantToDelete.unitId);
-        if (unitOfTenant) {
-          unitOfTenant.tenantId = null;
-        }
-
-        logAction(`Deleted tenant: ${tenantToDelete.name}`);
-        sendNotification(`Tenant "${tenantToDelete.name}" has been removed.`);
-
-        return {
-          ...prev,
-          tenants: prev.tenants.filter(t => t.id !== tenantToDelete.id),
-          properties: prev.properties.map(p => (p.id === propertyOfTenant?.id ? propertyOfTenant : p))
-        };
+        const updatedProperties = prev.properties.filter(p => p.id !== propertyToDelete.id);
+        return { ...prev, properties: updatedProperties };
       });
+      logAction(`Deleted property (local): ${propertyToDelete.name}`);
+      sendNotification(`Property "${propertyToDelete.name}" deleted.`);
       setIsDeleteConfirmOpen(false);
-      setTenantToDelete(null);
+      setPropertyToDelete(null);
     }
   };
 
-  // Tenant form component
-  const TenantForm: React.FC<{
-    tenant: Tenant | null;
-    onSave: (data: Tenant) => void;
+  const PropertyForm: React.FC<{
+    property: Property | null;
+    onSave: (data: { name: string; location: string; imageUrl: string; units: Unit[] }) => void;
     onCancel: () => void;
-    properties: Property[];
-  }> = ({ tenant, onSave, onCancel, properties }) => {
-    const [formData, setFormData] = useState<Tenant>(() => tenant || {
-      id: `t${Date.now()}`,
-      name: '',
-      email: '',
-      phone: '',
-      leaseStart: '',
-      leaseEnd: '',
-      propertyId: '',
-      unitId: '',
-    });
+  }> = ({ property, onSave, onCancel }) => {
+    const [name, setName] = useState(property?.name || '');
+    const [location, setLocation] = useState(property?.location || '');
+    const [imageUrl, setImageUrl] = useState(property?.images?.[0] || '');
+    const [units, setUnits] = useState<Unit[]>(
+      property?.units.length
+        ? property.units
+        : [
+            {
+              id: `unit${Date.now()}`,
+              name: '',
+              rent: 0,
+              type: 'residential',
+              tenantId: null,
+            },
+          ]
+    );
 
-    const [errors, setErrors] = useState<{ [key: string]: string | undefined }>({});
-
-    useEffect(() => {
-      if (tenant) {
-        setFormData(tenant);
-      } else {
-        setFormData({
-          id: `t${Date.now()}`,
+    const addUnit = () => {
+      setUnits(prev => [
+        ...prev,
+        {
+          id: `unit${Date.now() + Math.random()}`,
           name: '',
-          email: '',
-          phone: '',
-          leaseStart: '',
-          leaseEnd: '',
-          propertyId: '',
-          unitId: '',
-        });
-      }
-      setErrors({});
-    }, [tenant]);
+          rent: 0,
+          type: 'residential',
+          tenantId: null,
+        },
+      ]);
+    };
 
-    const availableUnits = useMemo(() => {
-      const selectedProp = properties.find(p => p.id === formData.propertyId);
-      if (!selectedProp) return [];
-      return selectedProp.units.filter(unit =>
-        !unit.tenantId || (tenant && unit.tenantId === tenant.id)
+    const removeUnit = (unitId: string) => {
+      setUnits(prev => prev.filter(u => u.id !== unitId));
+    };
+
+    const updateUnitField = (
+      unitId: string,
+      field: keyof Unit,
+      value: string | number | null
+    ) => {
+      setUnits(prev =>
+        prev.map(u =>
+          u.id === unitId
+            ? {
+                ...u,
+                [field]: value,
+              }
+            : u
+        )
       );
-    }, [formData.propertyId, properties, tenant]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      const { id, value } = e.target;
-      setFormData(prev => ({ ...prev, [id]: value } as Tenant));
-      setErrors(prev => ({ ...prev, [id]: undefined }));
     };
 
-    const validate = (): { [key: string]: string | undefined } => {
-      const newErrors: { [key: string]: string | undefined } = {};
-      if (!formData.name) newErrors.name = 'Tenant name is required.';
-      if (!formData.email) newErrors.email = 'Email is required.';
-      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid.';
-      if (!formData.phone) newErrors.phone = 'Phone number is required.';
-      if (!formData.leaseStart) newErrors.leaseStart = 'Lease start date is required.';
-      if (!formData.leaseEnd) newErrors.leaseEnd = 'Lease end date is required.';
-      if (formData.leaseStart && formData.leaseEnd && new Date(formData.leaseStart) >= new Date(formData.leaseEnd)) {
-        newErrors.leaseEnd = 'Lease end date must be after start date.';
-      }
-      if (!formData.propertyId) newErrors.propertyId = 'Property is required.';
-      if (!formData.unitId) newErrors.unitId = 'Unit is required.';
-      return newErrors;
-    };
+    const unitAvailable = (unit: Unit) => unit.tenantId == null;
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      const validationErrors = validate();
-      setErrors(validationErrors);
-      if (Object.keys(validationErrors).length === 0) {
-        onSave(formData);
-      }
+      const sanitizedUnits = units.map(u => ({
+        ...u,
+        tenantId: unitAvailable(u) ? null : u.tenantId,
+      }));
+
+      onSave({ name, location, imageUrl, units: sanitizedUnits });
     };
 
     return (
       <form onSubmit={handleSubmit} className="space-y-6">
-        <InputField id="name" type="text" label="Tenant Name" value={formData.name} onChange={handleChange} error={errors.name} required />
-        <InputField id="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} error={errors.email} required />
-        <InputField id="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} error={errors.phone} required />
-        <InputField id="leaseStart" type="date" label="Lease Start Date" value={formData.leaseStart} onChange={handleChange} error={errors.leaseStart} required />
-        <InputField id="leaseEnd" type="date" label="Lease End Date" value={formData.leaseEnd} onChange={handleChange} error={errors.leaseEnd} required />
-        <SelectField
-          id="propertyId"
-          label="Property"
-          value={formData.propertyId}
-          onChange={(e) => {
-            handleChange(e);
-            setFormData(prev => ({ ...prev, unitId: '' })); // Reset unit if property changes
-          }}
-          error={errors.propertyId}
-          options={properties.map(p => ({ value: p.id, label: p.name }))}
+        <InputField
+          id="prop-name"
+          type="text"
+          label="Property Name"
+          value={name}
+          onChange={e => setName(e.target.value)}
           required
         />
-        <SelectField
-          id="unitId"
-          label="Unit"
-          value={formData.unitId}
-          onChange={handleChange}
-          error={errors.unitId}
-          options={availableUnits.map(u => ({
-            value: u.id,
-            label: `${u.name} (${u.type}) - KES ${u.rent.toLocaleString()}`,
-          }))}
-          disabled={!formData.propertyId || availableUnits.length === 0}
+        <InputField
+          id="prop-location"
+          type="text"
+          label="Location / Address"
+          value={location}
+          onChange={e => setLocation(e.target.value)}
           required
-          placeholder={!formData.propertyId ? "Select a property first" : (availableUnits.length === 0 ? "No vacant units available" : "Select Unit")}
         />
+        <InputField
+          id="prop-image"
+          type="url"
+          label="Image URL"
+          value={imageUrl}
+          onChange={e => setImageUrl(e.target.value)}
+        />
+
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-2">Units</label>
+          {units.map(unit => (
+            <div
+              key={unit.id}
+              className="flex items-center space-x-2 mb-2 bg-gray-700 p-3 rounded-md"
+            >
+              <InputField
+                id={`unit-name-${unit.id}`}
+                type="text"
+                label="Unit Name / Number"
+                value={unit.name}
+                onChange={e => updateUnitField(unit.id, 'name', e.target.value)}
+                required
+                className="flex-1"
+              />
+              <InputField
+                id={`unit-rent-${unit.id}`}
+                type="number"
+                label="Rent (KES)"
+                value={unit.rent.toString()}
+                onChange={e => updateUnitField(unit.id, 'rent', Number(e.target.value))}
+                min={0}
+                required
+                className="w-28"
+              />
+              <label className="flex items-center space-x-1 text-sm select-none">
+                <input
+                  type="checkbox"
+                  checked={unitAvailable(unit)}
+                  onChange={e => {
+                    const available = e.target.checked;
+                    setUnits(prev =>
+                      prev.map(u =>
+                        u.id === unit.id
+                          ? { ...u, tenantId: available ? null : u.tenantId }
+                          : u
+                      )
+                    );
+                  }}
+                  className="form-checkbox h-5 w-5 text-cyan-400"
+                />
+                <span>Available</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => removeUnit(unit.id)}
+                className="text-red-400 hover:text-red-600"
+                title="Remove unit"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={addUnit}
+            className="mt-2 flex items-center space-x-2"
+          >
+            <Plus size={16} />
+            <span>Add Unit</span>
+          </Button>
+        </div>
+
         <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-          <Button type="submit" variant="primary">{tenant ? "Update Tenant" : "Add Tenant"}</Button>
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary">
+            {property ? 'Update Property' : 'Add Property'}
+          </Button>
         </div>
       </form>
     );
   };
 
-  // Delete confirmation modal
-  const DeleteConfirmationModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    itemType: string;
-    itemName: string | undefined;
-  }> = ({ isOpen, onClose, onConfirm, itemType, itemName }) => {
-    if (!isOpen) return null;
-    return (
-      <Modal isOpen={isOpen} onClose={onClose} title={`Confirm Delete ${itemType}`}>
-        <div className="p-4 text-center">
-          <AlertTriangle size={64} className="text-red-500 mx-auto mb-6" />
-          <p className="text-lg text-white mb-8">
-            Are you sure you want to delete {itemType} <span className="font-bold text-red-400">"{itemName}"</span>? This action cannot be undone.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <Button variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button variant="danger" onClick={onConfirm}>Delete</Button>
-          </div>
-        </div>
-      </Modal>
-    );
-  };
-
-  // Tenant detail modal to avoid unused variable warning
-  const TenantDetailModal: React.FC<{ tenant: Tenant | null; onClose: () => void }> = ({ tenant, onClose }) => {
-    if (!tenant) return null;
-
-    const property = data.properties.find(p => p.id === tenant.propertyId);
-    const unit = property?.units.find(u => u.id === tenant.unitId);
-    const leaseStatus = getLeaseStatus(tenant.leaseEnd);
-
-    return (
-      <Modal isOpen={!!tenant} onClose={onClose} title="Tenant Details">
-        <div className="space-y-4 text-white">
-          <p><strong>Name:</strong> {tenant.name}</p>
-          <p><strong>Email:</strong> {tenant.email}</p>
-          <p><strong>Phone:</strong> {tenant.phone}</p>
-          <p><strong>Property:</strong> {property?.name || 'N/A'}</p>
-          <p><strong>Unit:</strong> {unit?.name || 'N/A'}</p>
-          <p><strong>Lease Start:</strong> {tenant.leaseStart}</p>
-          <p><strong>Lease End:</strong> {tenant.leaseEnd}</p>
-          <p><strong>Status:</strong> {leaseStatus}</p>
-          <div className="flex justify-end">
-            <Button onClick={onClose} variant="secondary">
-              Close <X className="inline ml-1" size={16} />
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    );
-  };
-
-  // Columns definition for DataTable
-  const tenantTableColumns = useMemo(() => [
-    { key: 'name', header: 'Name', className: 'font-semibold text-white' },
-    {
-      key: 'propertyUnit',
-      header: 'Property & Unit',
-      render: (row: Tenant) => {
-        const prop = data.properties.find(p => p.id === row.propertyId);
-        const unit = prop?.units.find(u => u.id === row.unitId);
-        return `${prop?.name || 'N/A'} - ${unit?.name || 'N/A'}`;
-      },
-    },
-    {
-      key: 'contact',
-      header: 'Contact',
-      render: (row: Tenant) => (
-        <div className="flex flex-col space-y-1">
-          <span className="flex items-center text-gray-300"><Mail size={14} className="mr-2 text-gray-500" />{row.email}</span>
-          <span className="flex items-center text-gray-300"><Phone size={14} className="mr-2 text-gray-500" />{row.phone}</span>
-        </div>
-      ),
-    },
-    { key: 'leaseEnd', header: 'Lease End' },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (row: Tenant) => {
-        const leaseStatus = getLeaseStatus(row.leaseEnd);
-        const statusColorClass = {
-          'Active': 'bg-emerald-500/20 text-emerald-400',
-          'Ending Soon': 'bg-amber-500/20 text-amber-400',
-          'Expired': 'bg-red-500/20 text-red-400',
-          'N/A': 'bg-gray-500/20 text-gray-400'
-        }[leaseStatus] || 'bg-gray-500/20 text-gray-400';
-        return (
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColorClass}`}>
-            {leaseStatus}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (row: Tenant) => (
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" onClick={() => handleEditTenantClick(row)} title="Edit Tenant">
-            <Edit size={18} />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDeleteTenantClick(row)} title="Delete Tenant">
-            <Trash2 size={18} />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedTenant(row)} title="View Details">
-            <Info size={18} />
-          </Button>
-        </div>
-      ),
-    },
-  ], [data.properties]);
-
   return (
     <>
-      {/* Tenant Add/Edit Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingTenant ? "Edit Tenant" : "Add New Tenant"}>
-        <TenantForm
-          tenant={editingTenant}
-          onSave={handleSaveTenant}
+      {/* Add/Edit Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingProperty ? 'Edit Property' : 'Add New Property'}
+      >
+        <PropertyForm
+          property={editingProperty}
+          onSave={handleSaveProperty}
           onCancel={() => setIsModalOpen(false)}
-          properties={landlordProperties}
         />
       </Modal>
 
-      {/* Tenant Delete Confirmation Modal */}
-      <DeleteConfirmationModal
+      {/* Delete Confirm Modal */}
+      <Modal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={performDeleteTenant}
-        itemType="Tenant"
-        itemName={tenantToDelete?.name}
-      />
-
-      {/* Tenant Detail Modal */}
-      <TenantDetailModal tenant={selectedTenant} onClose={() => setSelectedTenant(null)} />
-
-      <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 text-white">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
-          <h3 className="text-xl font-semibold">My Tenants</h3>
-          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
-            {/* Search Input */}
-            <div className="relative flex-grow w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search tenants..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-white transition-all duration-200"
-              />
-            </div>
-            {/* Filter by Status */}
-            <div className="relative w-full sm:w-auto">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-                className="block w-full pl-3 pr-10 py-2.5 text-base bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 rounded-lg text-white appearance-none transition-all duration-200"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Ending Soon">Ending Soon</option>
-                <option value="Expired">Expired</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
-            </div>
-            {/* Add Tenant Button */}
-            <Button onClick={handleAddTenantClick} className="w-full sm:w-auto">
-              <PlusCircle className="mr-2" /> Add Tenant
+        title="Confirm Property Deletion"
+      >
+        <div className="p-4 text-center">
+          <p className="text-lg text-white mb-8">
+            Are you sure you want to delete property{' '}
+            <span className="font-bold text-red-400">"{propertyToDelete?.name}"</span>? This action
+            cannot be undone.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Button variant="secondary" onClick={() => setIsDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={performDeleteProperty}>
+              Delete Property
             </Button>
           </div>
         </div>
-        {/* Tenants Data Table */}
-        <DataTable<Tenant>
-          data={filteredTenants}
-          columns={tenantTableColumns}
-          emptyMessage="No tenants found matching your criteria."
-        />
+      </Modal>
+
+      {/* Property Cards */}
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h3 className="text-2xl font-semibold">My Properties</h3>
+          <Button
+            onClick={() => {
+              setEditingProperty(null);
+              setIsModalOpen(true);
+            }}
+          >
+            <PlusCircle className="mr-2" /> Add Property
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {landlordProperties.length > 0 ? (
+            landlordProperties.map(p => {
+              const occupied = p.units.filter(u => u.tenantId).length;
+              const total = p.units.length;
+              const income = p.units.reduce(
+                (sum, unit) => (unit.tenantId ? sum + unit.rent : sum),
+                0
+              );
+
+              return (
+                <div
+                  key={p.id} // <- 🔑 Make sure the key is unique
+                  className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 flex flex-col justify-between hover:scale-105 transition-transform"
+                >
+                  <div>
+                    <h4 className="font-bold text-xl text-cyan-400 mb-1">{p.name}</h4>
+                    <p className="text-sm text-gray-400 mb-2">{p.location}</p>
+                    {p.images.length > 0 && (
+                      <img
+                        src={p.images[0]}
+                        alt={`${p.name} preview`}
+                        className="rounded-lg w-full h-40 object-cover mb-4"
+                      />
+                    )}
+                    <p className="text-sm text-gray-400 mb-2">Units: {total}</p>
+                    <p className="text-sm text-gray-400 mb-2">Occupied: {occupied}</p>
+                    <p className="text-sm text-emerald-400">
+                      KES {income.toLocaleString()} / month
+                    </p>
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-cyan-300 mb-2">Units Details:</h5>
+                    <ul className="text-sm text-gray-300 space-y-1 max-h-32 overflow-auto">
+                      {p.units.map(unit => (
+                        <li key={unit.id || `${unit.name}-${unit.rent}`}>
+                          <span>{unit.name || 'Unnamed Unit'}</span>
+                          <span>
+                            {' '}KES {unit.rent.toLocaleString()} -{' '}
+                            {unit.tenantId ? (
+                              <span className="text-red-400 font-semibold">Occupied</span>
+                            ) : (
+                              <span className="text-green-400 font-semibold">Available</span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="flex justify-between items-center mt-4">
+                    <div />
+                    <div className="flex space-x-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleEditPropertyClick(p)}>
+                        <Edit size={18} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeletePropertyClick(p)}
+                      >
+                        <Trash2 size={18} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-gray-400">No properties found.</p>
+          )}
+        </div>
       </div>
     </>
   );
 };
 
-export default TenantManagement;
+export default PropertyManagement;

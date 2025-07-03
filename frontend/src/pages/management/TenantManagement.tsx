@@ -21,13 +21,14 @@ import DataTable from '../../components/tables/DataTable';
 import type { Tenant, Property } from '../../types/models';
 import { getLeaseStatus } from '../../utils/helpers';
 
-/**
- * TenantManagement component.
- * Allows landlords to add, view, edit, and delete tenant records.
- * Includes search and filter functionalities for tenants.
- */
 const TenantManagement: React.FC = () => {
-  const { data, setData, logAction, sendNotification } = useData();
+  const {
+    data,
+    setData,
+    addTenant,
+    updateTenant,
+    deleteTenant,
+  } = useData();
   const { currentUserId } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,20 +37,17 @@ const TenantManagement: React.FC = () => {
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Ending Soon' | 'Expired'>('All');
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null); // Used to show tenant detail modal
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
 
-  // Properties belonging to current landlord
   const landlordProperties = useMemo(() => {
     return data.properties.filter(p => p.landlordId === currentUserId);
   }, [data.properties, currentUserId]);
 
-  // Tenants belonging to landlord's properties
   const landlordTenants = useMemo(() => {
     const propIds = landlordProperties.map(p => p.id);
     return data.tenants.filter(t => propIds.includes(t.propertyId));
   }, [data.tenants, landlordProperties]);
 
-  // Filter tenants by search and lease status
   const filteredTenants = useMemo(() => {
     let tenants = landlordTenants;
 
@@ -68,98 +66,75 @@ const TenantManagement: React.FC = () => {
     return tenants;
   }, [landlordTenants, searchTerm, filterStatus]);
 
-  // Open modal for adding new tenant
   const handleAddTenantClick = () => {
     setEditingTenant(null);
     setIsModalOpen(true);
   };
 
-  // Open modal for editing existing tenant
   const handleEditTenantClick = (tenant: Tenant) => {
     setEditingTenant(tenant);
     setIsModalOpen(true);
   };
 
-  // Save new or updated tenant
-  const handleSaveTenant = (tenantData: Tenant) => {
-    setData(prev => {
-      let updatedTenants = [...prev.tenants];
-      const updatedProperties = [...prev.properties];
+  const handleSaveTenant = async (tenantData: Tenant) => {
+    const isEdit = !!editingTenant;
 
-      if (editingTenant) {
-        // Unassign tenant from old unit if unit changed
-        const oldProperty = prev.properties.find(p => p.id === editingTenant.propertyId);
-        const oldUnit = oldProperty?.units.find(u => u.id === editingTenant.unitId);
-        if (oldUnit && oldUnit.tenantId === editingTenant.id && oldUnit.id !== tenantData.unitId) {
-          oldUnit.tenantId = null;
-        }
-
-        // Update tenant record
-        updatedTenants = updatedTenants.map(t => t.id === tenantData.id ? tenantData : t);
-        logAction(`Updated tenant: ${tenantData.name}`);
-      } else {
-        // Add new tenant
-        updatedTenants.push(tenantData);
-        logAction(`Added new tenant: ${tenantData.name}`);
-        sendNotification(`New tenant "${tenantData.name}" added.`);
+    if (isEdit && editingTenant?.unitId !== tenantData.unitId) {
+      const oldProperty = data.properties.find(p => p.id === editingTenant.propertyId);
+      const oldUnit = oldProperty?.units.find(u => u.id === editingTenant.unitId);
+      if (oldUnit && oldUnit.tenantId === editingTenant.id) {
+        oldUnit.tenantId = null;
       }
+    }
 
-      // Assign tenant to new unit
-      const newProperty = updatedProperties.find(p => p.id === tenantData.propertyId);
-      const newUnit = newProperty?.units.find(u => u.id === tenantData.unitId);
-      if (newUnit) {
-        newUnit.tenantId = tenantData.id;
-      }
+    const newProperty = data.properties.find(p => p.id === tenantData.propertyId);
+    const newUnit = newProperty?.units.find(u => u.id === tenantData.unitId);
+    if (newUnit) newUnit.tenantId = tenantData.id;
 
-      // Update properties with modified units
-      return {
-        ...prev,
-        tenants: updatedTenants,
-        properties: updatedProperties.map(p => ({
-          ...p,
-          units: p.id === newProperty?.id ? newProperty.units : p.units
-        }))
-      };
-    });
+    setData(prev => ({
+      ...prev,
+      properties: prev.properties.map(p =>
+        p.id === newProperty?.id ? { ...p, units: newProperty.units } : p
+      )
+    }));
+
+    if (isEdit) {
+      await updateTenant(tenantData);
+    } else {
+      await addTenant(tenantData);
+    }
 
     setIsModalOpen(false);
     setEditingTenant(null);
   };
 
-  // Prepare deletion of tenant
   const handleDeleteTenantClick = (tenant: Tenant) => {
     setTenantToDelete(tenant);
     setIsDeleteConfirmOpen(true);
   };
 
-  // Delete tenant and unassign from unit
-  const performDeleteTenant = () => {
-    if (tenantToDelete) {
-      setData(prev => {
-        const propertyOfTenant = prev.properties.find(p => p.id === tenantToDelete.propertyId);
-        const unitOfTenant = propertyOfTenant?.units.find(u => u.id === tenantToDelete.unitId);
-        if (unitOfTenant) {
-          unitOfTenant.tenantId = null;
-        }
+  const performDeleteTenant = async () => {
+    if (!tenantToDelete) return;
 
-        logAction(`Deleted tenant: ${tenantToDelete.name}`);
-        sendNotification(`Tenant "${tenantToDelete.name}" has been removed.`);
+    const property = data.properties.find(p => p.id === tenantToDelete.propertyId);
+    const unit = property?.units.find(u => u.id === tenantToDelete.unitId);
 
-        return {
-          ...prev,
-          tenants: prev.tenants.filter(t => t.id !== tenantToDelete.id),
-          properties: prev.properties.map(p => ({
-            ...p,
-            units: p.id === propertyOfTenant?.id ? propertyOfTenant.units : p.units
-          }))
-        };
-      });
-      setIsDeleteConfirmOpen(false);
-      setTenantToDelete(null);
+    if (unit && unit.tenantId === tenantToDelete.id) {
+      unit.tenantId = null;
     }
+
+    setData(prev => ({
+      ...prev,
+      properties: prev.properties.map(p =>
+        p.id === property?.id ? { ...p, units: property.units } : p
+      )
+    }));
+
+    await deleteTenant(tenantToDelete);
+    setIsDeleteConfirmOpen(false);
+    setTenantToDelete(null);
   };
 
-  // Tenant form component (nested for simplicity)
   const TenantForm: React.FC<{ tenant: Tenant | null; onSave: (data: Tenant) => void; onCancel: () => void; properties: Property[] }> = ({ tenant, onSave, onCancel, properties }) => {
     const [formData, setFormData] = useState<Tenant>(() => tenant || {
       id: `t${Date.now()}`,
@@ -269,7 +244,6 @@ const TenantManagement: React.FC = () => {
     );
   };
 
-  // Delete confirmation modal
   const DeleteConfirmationModal: React.FC<{ isOpen: boolean; onClose: () => void; onConfirm: () => void; itemType: string; itemName: string | undefined }> = ({ isOpen, onClose, onConfirm, itemType, itemName }) => {
     if (!isOpen) return null;
     return (
@@ -288,7 +262,6 @@ const TenantManagement: React.FC = () => {
     );
   };
 
-  // Tenant Detail Modal to fix unused selectedTenant warning
   const TenantDetailModal: React.FC<{ tenant: Tenant | null; onClose: () => void }> = ({ tenant, onClose }) => {
     if (!tenant) return null;
 
@@ -317,7 +290,6 @@ const TenantManagement: React.FC = () => {
     );
   };
 
-  // Columns for tenants DataTable
   const tenantTableColumns = useMemo(() => [
     { key: 'name', header: 'Name', className: 'font-semibold text-white' },
     {
@@ -379,7 +351,6 @@ const TenantManagement: React.FC = () => {
 
   return (
     <>
-      {/* Tenant Add/Edit Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingTenant ? "Edit Tenant" : "Add New Tenant"}>
         <TenantForm
           tenant={editingTenant}
@@ -389,7 +360,6 @@ const TenantManagement: React.FC = () => {
         />
       </Modal>
 
-      {/* Tenant Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
@@ -398,14 +368,12 @@ const TenantManagement: React.FC = () => {
         itemName={tenantToDelete?.name}
       />
 
-      {/* Tenant Detail Modal */}
       <TenantDetailModal tenant={selectedTenant} onClose={() => setSelectedTenant(null)} />
 
       <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 text-white">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
           <h3 className="text-xl font-semibold">My Tenants</h3>
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
-            {/* Search Input */}
             <div className="relative flex-grow w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -416,7 +384,6 @@ const TenantManagement: React.FC = () => {
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-white transition-all duration-200"
               />
             </div>
-            {/* Filter by Status */}
             <div className="relative w-full sm:w-auto">
               <select
                 value={filterStatus}
@@ -430,17 +397,15 @@ const TenantManagement: React.FC = () => {
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
             </div>
-            {/* Add Tenant Button */}
             <Button onClick={handleAddTenantClick} className="w-full sm:w-auto">
               <PlusCircle className="mr-2" /> Add Tenant
             </Button>
           </div>
         </div>
-        {/* Tenants Data Table */}
         <DataTable<Tenant>
-          data={filteredTenants}
           columns={tenantTableColumns}
-          emptyMessage="No tenants found matching your criteria."
+          data={filteredTenants}
+          emptyMessage="No tenants found."
         />
       </div>
     </>

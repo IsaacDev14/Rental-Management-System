@@ -4,9 +4,10 @@ import {
   createTenant,
   updateTenant,
   deleteTenant,
-} from '../controllers/tenantController.js';
+} from '../controllers/tenantController';
 
 const router = express.Router();
+
 router.get('/', getTenants);
 router.post('/', createTenant);
 router.put('/:id', updateTenant);

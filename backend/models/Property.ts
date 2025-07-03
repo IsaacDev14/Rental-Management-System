@@ -1,26 +1,37 @@
 import mongoose from 'mongoose';
 
-const unitSchema = new mongoose.Schema({
-  name: String,
-  type: String,
-  rent: Number,
-  tenantId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tenant',
-    default: null
-  }
+const UnitSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  name: { type: String, required: true },
+  rent: { type: Number, required: true },
+  type: { type: String, enum: ['residential', 'commercial'], default: 'residential' },
+  tenantId: { type: String, default: null },
 });
 
-const propertySchema = new mongoose.Schema({
-  name: String,
-  address: String,
-  landlordId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+const PropertySchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    location: { type: String, required: true },
+    images: [{ type: String }],
+    landlordId: { type: String, required: true },
+    coordinates: {
+      lat: { type: Number, default: 0 },
+      lng: { type: Number, default: 0 },
+    },
+    units: [UnitSchema],
   },
-  units: [unitSchema]
-});
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform: function (_, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+      },
+    },
+  }
+);
 
-const Property = mongoose.model('Property', propertySchema);
-
-module.exports = Property;
+const Property = mongoose.model('Property', PropertySchema);
+export default Property;

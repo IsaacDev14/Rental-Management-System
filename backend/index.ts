@@ -1,9 +1,10 @@
-// index.ts
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import mongoose from 'mongoose';
+
 import authRoutes from './routes/authRoutes.js';
+import propertyRoutes from './routes/propertyRoutes';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Load environment variables
@@ -25,6 +26,8 @@ app.get('/api/ping', (_, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/properties', propertyRoutes);
+
 
 // Error Middleware
 app.use(errorHandler);

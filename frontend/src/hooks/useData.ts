@@ -1,28 +1,50 @@
-// frontend/src/hooks/useData.ts
+import { useContext, useCallback } from 'react';
+import { DataContext } from '../contexts/DataContext';
+import api from '../utils/api';
+import type { Property } from '../types/models';
+import { useAuth } from './useAuth';
 
-import { useContext } from 'react';
-import { DataContext } from '../contexts/DataContext'; // Import DataContext
-import type { AppData } from '../types/models';
-
-/**
- * Interface for the DataContext value.
- * Provides access to the application's data state and functions to modify it.
- */
-interface DataContextType {
-  data: AppData;
-  setData: React.Dispatch<React.SetStateAction<AppData>>;
-  logAction: (message: string) => void;
-  sendNotification: (message: string) => void;
-}
-
-/**
- * Custom hook to easily access application data and data manipulation functions.
- * Throws an error if used outside of a DataProvider.
- */
-export const useData = (): DataContextType => {
+export const useData = () => {
   const context = useContext(DataContext);
+  const { currentUserId } = useAuth();
+
   if (!context) {
     throw new Error('useData must be used within a DataProvider');
   }
-  return context as DataContextType; // Type assertion as useContext can return null
+
+  const { data, setData, logAction, sendNotification } = context;
+
+  // ✅ Fetch only the properties for this landlord
+  const fetchProperties = useCallback(async () => {
+    try {
+      const res = await api.get(`/properties/${currentUserId}`);
+      setData(prev => ({ ...prev, properties: res.data }));
+    } catch (err) {
+      console.error('Failed to fetch properties:', err);
+    }
+  }, [setData, currentUserId]);
+
+  //  Add a property and sync it into context
+  const addProperty = useCallback(async (newProperty: Partial<Property>) => {
+    try {
+      const res = await api.post('/properties', newProperty);
+      setData(prev => ({
+        ...prev,
+        properties: [...prev.properties, res.data],
+      }));
+      logAction(`Added property: ${res.data.name}`);
+      sendNotification(`Property "${res.data.name}" added.`);
+    } catch (err) {
+      console.error('Failed to add property:', err);
+    }
+  }, [setData, logAction, sendNotification]);
+
+  return {
+    data,
+    setData,
+    logAction,
+    sendNotification,
+    fetchProperties,
+    addProperty,
+  };
 };

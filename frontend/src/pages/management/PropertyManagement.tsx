@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+// src/pages/PropertyManagement.tsx
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { PlusCircle, Edit, Trash2, Plus, X } from 'lucide-react';
 import { useData } from '../../hooks/useData';
 import { useAuth } from '../../hooks/useAuth';
@@ -8,7 +10,15 @@ import Button from '../../components/ui/Button';
 import type { Property, Unit } from '../../types/models';
 
 const PropertyManagement: React.FC = () => {
-  const { data, setData, logAction, sendNotification } = useData();
+  const {
+    data,
+    setData,
+    logAction,
+    sendNotification,
+    fetchProperties,
+    addProperty,
+  } = useData();
+
   const { currentUserId } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,48 +26,50 @@ const PropertyManagement: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
+
   const landlordProperties = useMemo(() => {
     return data.properties.filter(p => p.landlordId === currentUserId);
   }, [data.properties, currentUserId]);
 
-  const handleSaveProperty = (propertyData: {
+  const handleSaveProperty = async (propertyData: {
     name: string;
     location: string;
     imageUrl: string;
     units: Unit[];
   }) => {
-    setData(prev => {
-      if (editingProperty) {
-        logAction(`Updated property: ${propertyData.name}`);
-        return {
-          ...prev,
-          properties: prev.properties.map(p =>
-            p.id === editingProperty.id
-              ? {
-                  ...p,
-                  name: propertyData.name,
-                  location: propertyData.location,
-                  images: [propertyData.imageUrl],
-                  units: propertyData.units,
-                }
-              : p
-          ),
-        };
-      } else {
-        const newProperty: Property = {
-          id: `prop${Date.now()}`,
-          landlordId: currentUserId || 'l1',
-          name: propertyData.name,
-          location: propertyData.location,
-          images: [propertyData.imageUrl],
-          units: propertyData.units,
-          coordinates: { lat: 0, lng: 0 },
-        };
-        logAction(`Added new property: ${newProperty.name}`);
-        sendNotification(`New property "${newProperty.name}" added.`);
-        return { ...prev, properties: [...prev.properties, newProperty] };
-      }
-    });
+    if (editingProperty) {
+      logAction(`Updated property (local): ${propertyData.name}`);
+      setData(prev => ({
+        ...prev,
+        properties: prev.properties.map(p =>
+          p.id === editingProperty.id
+            ? {
+                ...p,
+                name: propertyData.name,
+                location: propertyData.location,
+                images: [propertyData.imageUrl],
+                units: propertyData.units,
+              }
+            : p
+        ),
+      }));
+    } else {
+      const newProperty = {
+        name: propertyData.name,
+        location: propertyData.location,
+        images: [propertyData.imageUrl],
+        landlordId: currentUserId || 'l1',
+        coordinates: { lat: 0, lng: 0 },
+        units: propertyData.units,
+      };
+
+      await addProperty(newProperty);
+      await fetchProperties(); // 🔁 Re-fetch to ensure the new property is visible after refresh
+    }
+
     setIsModalOpen(false);
     setEditingProperty(null);
   };
@@ -75,32 +87,11 @@ const PropertyManagement: React.FC = () => {
   const performDeleteProperty = () => {
     if (propertyToDelete) {
       setData(prev => {
-        const updatedTenants = prev.tenants.filter(t => t.propertyId !== propertyToDelete.id);
-        const updatedProperties = prev.properties
-          .map(p => {
-            if (p.id === propertyToDelete.id) return null;
-            return {
-              ...p,
-              units: p.units.map(unit => ({
-                ...unit,
-                tenantId: updatedTenants.some(t => t.id === unit.tenantId) ? unit.tenantId : null,
-              })),
-            };
-          })
-          .filter(Boolean) as Property[];
-
-        logAction(`Deleted property: ${propertyToDelete.name}`);
-        sendNotification(`Property "${propertyToDelete.name}" has been deleted.`);
-
-        return {
-          ...prev,
-          properties: updatedProperties,
-          tenants: updatedTenants,
-          payments: prev.payments.filter(p => !updatedTenants.some(t => t.id === p.tenantId)),
-          expenses: prev.expenses.filter(e => e.propertyId !== propertyToDelete.id),
-          deposits: prev.deposits.filter(d => d.propertyId !== propertyToDelete.id),
-        };
+        const updatedProperties = prev.properties.filter(p => p.id !== propertyToDelete.id);
+        return { ...prev, properties: updatedProperties };
       });
+      logAction(`Deleted property (local): ${propertyToDelete.name}`);
+      sendNotification(`Property "${propertyToDelete.name}" deleted.`);
       setIsDeleteConfirmOpen(false);
       setPropertyToDelete(null);
     }
@@ -210,7 +201,7 @@ const PropertyManagement: React.FC = () => {
               <InputField
                 id={`unit-name-${unit.id}`}
                 type="text"
-                label={`Unit Name / Number`}
+                label="Unit Name / Number"
                 value={unit.name}
                 onChange={e => updateUnitField(unit.id, 'name', e.target.value)}
                 required
@@ -279,6 +270,7 @@ const PropertyManagement: React.FC = () => {
 
   return (
     <>
+      {/* Add/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -291,6 +283,7 @@ const PropertyManagement: React.FC = () => {
         />
       </Modal>
 
+      {/* Delete Confirm Modal */}
       <Modal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
@@ -313,6 +306,7 @@ const PropertyManagement: React.FC = () => {
         </div>
       </Modal>
 
+      {/* Property Cards */}
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-semibold">My Properties</h3>
@@ -338,7 +332,7 @@ const PropertyManagement: React.FC = () => {
 
               return (
                 <div
-                  key={p.id}
+                  key={p.id} // <- 🔑 Make sure the key is unique
                   className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 flex flex-col justify-between hover:scale-105 transition-transform"
                 >
                   <div>
@@ -353,16 +347,18 @@ const PropertyManagement: React.FC = () => {
                     )}
                     <p className="text-sm text-gray-400 mb-2">Units: {total}</p>
                     <p className="text-sm text-gray-400 mb-2">Occupied: {occupied}</p>
-                    <p className="text-sm text-emerald-400">KES {income.toLocaleString()} / month</p>
+                    <p className="text-sm text-emerald-400">
+                      KES {income.toLocaleString()} / month
+                    </p>
                   </div>
                   <div>
                     <h5 className="font-semibold text-cyan-300 mb-2">Units Details:</h5>
                     <ul className="text-sm text-gray-300 space-y-1 max-h-32 overflow-auto">
                       {p.units.map(unit => (
-                        <li key={unit.id} className="flex justify-between">
+                        <li key={unit.id || `${unit.name}-${unit.rent}`}>
                           <span>{unit.name || 'Unnamed Unit'}</span>
                           <span>
-                            KES {unit.rent.toLocaleString()} -{' '}
+                            {' '}KES {unit.rent.toLocaleString()} -{' '}
                             {unit.tenantId ? (
                               <span className="text-red-400 font-semibold">Occupied</span>
                             ) : (

@@ -1,5 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { PlusCircle, Edit, Trash2, Search, ChevronDown, Mail, Phone, AlertTriangle } from 'lucide-react';
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  Search,
+  ChevronDown,
+  Mail,
+  Phone,
+  AlertTriangle,
+  Info,
+  X,
+} from 'lucide-react';
 import { useData } from '../../hooks/useData';
 import { useAuth } from '../../hooks/useAuth';
 import Modal from '../../components/ui/Modal';
@@ -25,7 +36,7 @@ const TenantManagement: React.FC = () => {
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Ending Soon' | 'Expired'>('All');
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null); // added to view tenant detail
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null); // Used to show tenant detail modal
 
   // Properties belonging to current landlord
   const landlordProperties = useMemo(() => {
@@ -277,6 +288,35 @@ const TenantManagement: React.FC = () => {
     );
   };
 
+  // Tenant Detail Modal to fix unused selectedTenant warning
+  const TenantDetailModal: React.FC<{ tenant: Tenant | null; onClose: () => void }> = ({ tenant, onClose }) => {
+    if (!tenant) return null;
+
+    const property = data.properties.find(p => p.id === tenant.propertyId);
+    const unit = property?.units.find(u => u.id === tenant.unitId);
+    const leaseStatus = getLeaseStatus(tenant.leaseEnd);
+
+    return (
+      <Modal isOpen={!!tenant} onClose={onClose} title="Tenant Details">
+        <div className="space-y-4 text-white">
+          <p><strong>Name:</strong> {tenant.name}</p>
+          <p><strong>Email:</strong> {tenant.email}</p>
+          <p><strong>Phone:</strong> {tenant.phone}</p>
+          <p><strong>Property:</strong> {property?.name || 'N/A'}</p>
+          <p><strong>Unit:</strong> {unit?.name || 'N/A'}</p>
+          <p><strong>Lease Start:</strong> {tenant.leaseStart}</p>
+          <p><strong>Lease End:</strong> {tenant.leaseEnd}</p>
+          <p><strong>Status:</strong> {leaseStatus}</p>
+          <div className="flex justify-end">
+            <Button onClick={onClose} variant="secondary">
+              Close <X className="inline ml-1" size={16} />
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   // Columns for tenants DataTable
   const tenantTableColumns = useMemo(() => [
     { key: 'name', header: 'Name', className: 'font-semibold text-white' },
@@ -329,6 +369,9 @@ const TenantManagement: React.FC = () => {
           <Button variant="ghost" size="sm" onClick={() => handleDeleteTenantClick(row)} title="Delete Tenant">
             <Trash2 size={18} />
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedTenant(row)} title="View Details">
+            <Info size={18} />
+          </Button>
         </div>
       ),
     },
@@ -354,6 +397,9 @@ const TenantManagement: React.FC = () => {
         itemType="Tenant"
         itemName={tenantToDelete?.name}
       />
+
+      {/* Tenant Detail Modal */}
+      <TenantDetailModal tenant={selectedTenant} onClose={() => setSelectedTenant(null)} />
 
       <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 text-white">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">

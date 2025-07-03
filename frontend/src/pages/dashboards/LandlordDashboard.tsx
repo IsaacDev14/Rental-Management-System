@@ -5,9 +5,8 @@ import {
   FileWarning,
   Phone,
   Mail,
-  Shield,
-  TrendingUp as TrendingUpIcon,
   User,
+  TrendingUp as TrendingUpIcon,
 } from 'lucide-react';
 
 import { useAuth } from '../../hooks/useAuth';
@@ -32,7 +31,7 @@ const LandlordDashboard: React.FC = () => {
   const { currentUserId } = useAuth();
   return (
     <main className="flex-1 bg-gray-900 flex flex-col h-full">
-      <div className="p-8 flex-1 overflow-y-auto">
+      <div className="p-6 md:p-8 flex-1 overflow-y-auto">
         <LandlordDashboardContent landlordId={currentUserId} />
       </div>
     </main>
@@ -66,13 +65,18 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
     return data.expenses.filter(e => propIds.includes(e.propertyId));
   }, [data.expenses, landlordProperties, currentLandlord]);
 
-  const totalIncome = landlordPayments.filter(p => p.status === 'Paid').reduce((acc, p) => acc + p.amount, 0);
-  const overdueRent = landlordPayments.filter(p => p.status === 'Overdue').reduce((acc, p) => acc + p.amount, 0);
+  const totalIncome = landlordPayments
+    .filter(p => p.status === 'Paid')
+    .reduce((acc, p) => acc + p.amount, 0);
+  const overdueRent = landlordPayments
+    .filter(p => p.status === 'Overdue')
+    .reduce((acc, p) => acc + p.amount, 0);
   const totalExpenses = landlordExpenses.reduce((acc, e) => acc + e.amount, 0);
   const totalUnits = landlordProperties.flatMap(p => p.units).length;
   const occupiedUnits = landlordTenants.length;
   const occupancyRate = totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 
+  // Example static monthly data for chart (you can replace with dynamic data)
   const incomeExpenseData = [
     { name: 'Jan', income: 125000, expenses: 40000 },
     { name: 'Feb', income: 125000, expenses: 35000 },
@@ -82,10 +86,13 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
     { name: 'Jun', income: 160000, expenses: 82000 },
   ];
 
-  const expenseCategories: Record<string, number> = landlordExpenses.reduce((acc: Record<string, number>, e) => {
-    acc[e.category] = (acc[e.category] || 0) + e.amount;
-    return acc;
-  }, {});
+  const expenseCategories: Record<string, number> = landlordExpenses.reduce(
+    (acc: Record<string, number>, e) => {
+      acc[e.category] = (acc[e.category] || 0) + e.amount;
+      return acc;
+    },
+    {}
+  );
 
   const expenseData = Object.keys(expenseCategories).map(key => ({
     name: key,
@@ -96,34 +103,55 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
 
   return (
     <div className="space-y-8">
+      {/* Profile Card */}
       {currentLandlord && (
-        <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
+        <section className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
           <h3 className="text-xl font-semibold text-white mb-4">My Profile</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
-            <p className="flex items-center">
+            <p className="flex items-center text-sm md:text-base">
               <User size={16} className="mr-2 text-cyan-400" />
-              <span className="font-semibold text-white">Name:</span> {currentLandlord.name}
+              <span className="font-semibold text-white mr-1">Name:</span> {currentLandlord.name}
             </p>
-            <p className="flex items-center">
+            <p className="flex items-center text-sm md:text-base">
               <Mail size={16} className="mr-2 text-cyan-400" />
-              <span className="font-semibold text-white">Email:</span> {currentLandlord.email}
+              <span className="font-semibold text-white mr-1">Email:</span> {currentLandlord.email}
             </p>
-            <p className="flex items-center">
+            <p className="flex items-center text-sm md:text-base">
               <Phone size={16} className="mr-2 text-cyan-400" />
-              <span className="font-semibold text-white">Phone:</span> {currentLandlord.phone}
+              <span className="font-semibold text-white mr-1">Phone:</span> {currentLandlord.phone}
             </p>
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Monthly Income" value={`KES ${totalIncome.toLocaleString()}`} icon={DollarSign} color="emerald" change="+5.2%" />
-        <StatCard title="Total Monthly Expenses" value={`KES ${totalExpenses.toLocaleString()}`} icon={FileText} color="amber" change="+12%" />
+      {/* Stat Cards */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Monthly Income"
+          value={`KES ${totalIncome.toLocaleString()}`}
+          icon={DollarSign}
+          color="emerald"
+          change="+5.2%"
+        />
+        <StatCard
+          title="Total Monthly Expenses"
+          value={`KES ${totalExpenses.toLocaleString()}`}
+          icon={FileText}
+          color="amber"
+          change="+12%"
+        />
         <StatCard title="Overdue Rent" value={`KES ${overdueRent.toLocaleString()}`} icon={FileWarning} color="red" />
-        <StatCard title="Occupancy Rate" value={`${occupancyRate.toFixed(1)}%`} icon={TrendingUpIcon} color="cyan" change="-1.0%" />
-      </div>
+        <StatCard
+          title="Occupancy Rate"
+          value={`${occupancyRate.toFixed(1)}%`}
+          icon={TrendingUpIcon}
+          color="cyan"
+          change="-1.0%"
+        />
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      {/* Charts: Income vs Expenses and Expense Distribution */}
+      <section className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3 bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
           <h3 className="text-lg font-semibold text-white mb-4">Income vs Expenses</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -152,8 +180,10 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
                 outerRadius={100}
                 fill="#8884d8"
                 paddingAngle={5}
+                label={({ name, percent }) =>
+                  `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                }
                 labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent ?? 0) * 100}%`}
               >
                 {expenseData.map((_, index) => (
                   <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
@@ -164,23 +194,32 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </section>
 
-      <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
+      {/* Properties Overview */}
+      <section className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
         <h3 className="text-xl font-semibold text-white mb-4">My Properties Overview</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto custom-scrollbar">
           {landlordProperties.length > 0 ? (
             landlordProperties.map(p => {
               const occupied = p.units.filter(u => u.tenantId).length;
               const total = p.units.length;
               const income = p.units.reduce((sum, unit) => (unit.tenantId ? sum + unit.rent : sum), 0);
               return (
-                <div key={p.id} className="bg-gray-700 p-4 rounded-lg shadow-md border border-gray-600">
+                <div
+                  key={p.id}
+                  className="bg-gray-700 p-4 rounded-lg shadow-md border border-gray-600 flex flex-col justify-between"
+                >
                   <h4 className="font-bold text-lg text-cyan-400">{p.name}</h4>
                   <p className="text-sm text-gray-400 mb-2">{p.location}</p>
-                  <p className="text-sm text-gray-300">Units: {occupied}/{total} occupied</p>
                   <p className="text-sm text-gray-300">
-                    Potential Income: <span className="font-semibold text-emerald-400">KES {income.toLocaleString()}</span>
+                    Units: {occupied}/{total} occupied
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    Potential Income:{' '}
+                    <span className="font-semibold text-emerald-400">
+                      KES {income.toLocaleString()}
+                    </span>
                   </p>
                 </div>
               );
@@ -189,14 +228,18 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
             <p className="text-gray-400">No properties managed yet.</p>
           )}
         </div>
-      </div>
+      </section>
 
-      <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
+      {/* Recent Activity */}
+      <section className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700">
         <h3 className="text-xl font-semibold text-white mb-4">Recent Activity</h3>
         <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
           {data.auditLog.length > 0 ? (
             data.auditLog.slice(0, 5).map(log => (
-              <div key={log.id} className="font-mono text-sm bg-gray-700 p-3 rounded-lg border border-gray-600">
+              <div
+                key={log.id}
+                className="font-mono text-sm bg-gray-700 p-3 rounded-lg border border-gray-600"
+              >
                 <span className="text-cyan-400">{new Date(log.timestamp).toLocaleTimeString()}:</span>
                 <span className="ml-2 text-gray-300">{log.message}</span>
               </div>
@@ -205,7 +248,7 @@ const LandlordDashboardContent: React.FC<{ landlordId: string | null }> = ({ lan
             <p className="text-gray-400">No recent activity.</p>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

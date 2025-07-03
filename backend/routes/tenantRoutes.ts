@@ -1,11 +1,15 @@
 import express from 'express';
-const router = express.Router();
-import tenantController from '../controllers/tenantController';
+import {
+  getTenants,
+  createTenant,
+  updateTenant,
+  deleteTenant,
+} from '../controllers/tenantController.js';
 
-// /api/tenants
-router.get('/', tenantController.getTenants);
-router.post('/', tenantController.createTenant);
-router.put('/:id', tenantController.updateTenant);
-router.delete('/:id', tenantController.deleteTenant);
+const router = express.Router();
+router.get('/', getTenants);
+router.post('/', createTenant);
+router.put('/:id', updateTenant);
+router.delete('/:id', deleteTenant);
 
 export default router;

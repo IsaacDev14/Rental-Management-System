@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 
 import authRoutes from './routes/authRoutes.js';
 import propertyRoutes from './routes/propertyRoutes';
+import tenantRoutes from './routes/tenantRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Load environment variables
@@ -21,13 +22,13 @@ app.use(express.urlencoded({ extended: false }));
 
 // Health Check
 app.get('/api/ping', (_, res) => {
-  res.status(200).json({ message: 'Server is running 🎉' });
+  res.status(200).json({ message: 'Server is running ' });
 });
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
-
+app.use('/api/tenants', tenantRoutes);
 
 // Error Middleware
 app.use(errorHandler);

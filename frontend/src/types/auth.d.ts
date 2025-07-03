@@ -1,6 +1,6 @@
 // types/auth.ts
 
-export type UserRole = 'landlord' | 'tenant' | 'kra_officer' | string;
+export type UserRole = 'landlord' | 'tenant' | 'kra_officer';
 
 export interface AuthUser {
   id: string;

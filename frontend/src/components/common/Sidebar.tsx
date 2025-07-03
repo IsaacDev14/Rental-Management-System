@@ -1,6 +1,8 @@
-import React, { useContext, useMemo } from 'react';
-import { LogOut } from 'lucide-react';
-import { AuthContext } from '../../contexts/AuthContext'; // Updated import path
+// src/components/common/Sidebar.tsx
+
+import React, { useContext, useMemo } from "react";
+import { LogOut } from "lucide-react";
+import { AuthContext } from "../../contexts/AuthContext";
 
 interface NavItem {
   name: string;
@@ -17,19 +19,19 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem
   const authContext = useContext(AuthContext);
 
   if (!authContext) {
-    throw new Error('AuthContext is undefined. Make sure your app is wrapped with AuthProvider.');
+    throw new Error("AuthContext is undefined. Make sure your app is wrapped with AuthProvider.");
   }
 
   const { userRole, logout, user } = authContext;
 
   const userDisplay = useMemo(() => {
     if (user) return { fullName: user.name, role: user.role };
-    
+
     // Fallback for demo purposes
-    let fullName = 'Current User';
-    if (userRole === 'landlord') fullName = 'Landlord Demo';
-    else if (userRole === 'tenant') fullName = 'Tenant Demo';
-    else if (userRole === 'kra_officer') fullName = 'KRA Officer';
+    let fullName = "Current User";
+    if (userRole === "landlord") fullName = "Landlord Demo";
+    else if (userRole === "tenant") fullName = "Tenant Demo";
+    else if (userRole === "kra_officer") fullName = "KRA Officer";
 
     return { fullName, role: userRole };
   }, [userRole, user]);
@@ -55,18 +57,18 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem
             className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200
               ${
                 activeItem === item.name
-                  ? 'bg-cyan-600 text-white shadow-lg'
-                  : 'hover:bg-gray-700 hover:text-white'
+                  ? "bg-cyan-600 text-white shadow-lg"
+                  : "hover:bg-gray-700 hover:text-white"
               }`}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 setActiveItem(item.name);
               }
             }}
-            aria-current={activeItem === item.name ? 'page' : undefined}
+            aria-current={activeItem === item.name ? "page" : undefined}
           >
             <item.icon className="h-5 w-5 mr-3" aria-hidden="true" />
             {item.name}

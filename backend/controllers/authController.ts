@@ -12,7 +12,13 @@ export const register = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
+
+    // Validate input
+    if (!name || !email || !password || !role) {
+      res.status(400).json({ message: 'All fields are required (name, email, password, role)' });
+      return;
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -25,16 +31,33 @@ export const register = async (
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Create user with role
     const user = new User({
       name,
       email,
       password: hashedPassword,
+      role,
     });
 
     await user.save();
 
-    res.status(201).json({ message: 'User registered successfully' });
+    // Generate token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -65,7 +88,7 @@ export const login = async (
 
     // Generate token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: user._id, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -76,6 +99,7 @@ export const login = async (
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {

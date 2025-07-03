@@ -1,9 +1,7 @@
-// frontend/src/pages/auth/RegisterPage.tsx
-
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import type { UserRole } from '../../types/auth';
+import type { UserRole } from '../../types/auth'; // ✅ Ensure this file exists
 
 interface RegisterPageProps {
   onLoginClick: () => void;
@@ -11,23 +9,32 @@ interface RegisterPageProps {
 
 const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginClick }) => {
   const { register } = useAuth();
+
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>('landlord');
+  const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
     try {
       await register(email, password, name, selectedRole);
+      // You can redirect or call success feedback here if needed
     } catch (err) {
-      alert((err as Error).message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Registration failed');
+      }
     }
   };
 
@@ -35,6 +42,10 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginClick }) => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4">
       <div className="max-w-md w-full bg-gray-800 p-10 rounded-2xl shadow-2xl border border-gray-700">
         <h1 className="text-4xl font-extrabold text-cyan-400 text-center mb-6">Register</h1>
+        {error && (
+          <div className="mb-4 text-center text-red-400 font-semibold">{error}</div>
+        )}
+
         <form className="space-y-6" onSubmit={handleRegister}>
           <input
             type="text"
@@ -89,9 +100,13 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginClick }) => {
             Register
           </button>
         </form>
+
         <p className="text-sm text-center text-gray-400 mt-4">
           Already have an account?{' '}
-          <button onClick={onLoginClick} className="text-cyan-400 hover:underline">
+          <button
+            onClick={onLoginClick}
+            className="text-cyan-400 hover:underline"
+          >
             Login
           </button>
         </p>

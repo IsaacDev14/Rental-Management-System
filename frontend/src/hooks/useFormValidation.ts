@@ -1,3 +1,4 @@
+// File: frontend/src/hooks/useFormValidation.ts
 import { useState, useCallback } from 'react';
 import type { AnyObject } from '../types/common'; // Use type-only import for AnyObject
 

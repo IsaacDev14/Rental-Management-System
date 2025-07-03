@@ -1,116 +1,72 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Building, Users, DollarSign, FileText, FilePlus,
   History, BarChart2, Shield
 } from 'lucide-react';
 
 import { AuthContext } from './contexts/AuthContext';
-import { DataContext } from './contexts/DataContext';
+import { AuthProvider } from './contexts/AuthProvider';
+import { DataProvider } from './contexts/DataProvider';
 
+// Dashboard imports
 import LandlordDashboard from './pages/dashboards/LandlordDashboard';
 import TenantDashboard from './pages/dashboards/TenantDashboard';
 import KRADashboard from './pages/dashboards/KRADashboard';
 
+// Auth pages
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 
+// Components
 import Header from './components/common/Header';
 import Sidebar from './components/common/Sidebar';
 
+// Management pages
 import PropertyManagement from './pages/management/PropertyManagement';
 import TenantManagement from './pages/management/TenantManagement';
 import PaymentManagement from './pages/management/PaymentManagement';
 import ExpenseTracking from './pages/management/ExpenseTracking';
 import RentalDepositInvestment from './pages/management/RentalDepositInvestment';
+
+// Other pages
 import Reports from './pages/reports/Reports';
 import AuditLogView from './pages/audit/AuditLogView';
 
-import type { UserRole } from './types/auth';
-import type { AppData } from './types/models';
-import type { AuthContextType } from './types/auth';
-import type { DataContextType } from './contexts/DataContext';
+interface NavItem {
+  name: string;
+  icon: React.ElementType;
+}
 
-const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  const login = useCallback((role: UserRole, userId: string | null = null) => {
-    setIsLoggedIn(true);
-    setUserRole(role);
-    setCurrentUserId(userId || (role === 'landlord' ? 'landlord-demo-id' : role === 'tenant' ? 'tenant-demo-id' : null));
-    console.log(`Logged in as ${role} with ID: ${userId || 'demo-id'}`);
-  }, []);
-
-  const register = useCallback((role: UserRole, userId: string | null = null) => {
-    login(role, userId || `new-${role}-id`);
-    console.log(`Registered and logged in as ${role}`);
-  }, [login]);
-
-  const logout = useCallback(() => {
-    setIsLoggedIn(false);
-    setUserRole(null);
-    setCurrentUserId(null);
-    console.log('Logged out');
-  }, []);
-
-  const authValue: AuthContextType = useMemo(() => ({
-    isLoggedIn, userRole, currentUserId, login, register, logout
-  }), [isLoggedIn, userRole, currentUserId, login, register, logout]);
-
-  return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
-};
-
-const DataProvider = ({ children }: { children: React.ReactNode }) => {
-  const [data, setData] = useState<AppData>({
-    landlords: [],
-    properties: [],
-    tenants: [],
-    payments: [],
-    expenses: [],
-    deposits: [],
-    auditLog: [],
-    notifications: [],
-    investmentFunds: []
-  });
-
-  const logAction = useCallback((message: string) => {
-    setData((prev) => ({
-      ...prev,
-      auditLog: [{ id: Date.now(), timestamp: new Date(), message }, ...prev.auditLog]
-    }));
-  }, []);
-
-  const sendNotification = useCallback((message: string) => {
-    setData((prev) => ({
-      ...prev,
-      notifications: [{ id: Date.now(), read: false, message }, ...prev.notifications]
-    }));
-  }, []);
-
-  const dataValue: DataContextType = useMemo(() => ({
-    data, setData, logAction, sendNotification
-  }), [data, logAction, sendNotification]);
-
-  return <DataContext.Provider value={dataValue}>{children}</DataContext.Provider>;
-};
-
-function AuthWrapper() {
-  const { isLoggedIn } = React.useContext(AuthContext)!;
+const AuthWrapper: React.FC = () => {
+  const authContext = useContext(AuthContext);
   const [showRegister, setShowRegister] = useState(false);
 
+  if (!authContext) {
+    throw new Error('AuthContext must be used within an AuthProvider');
+  }
+
+  const { isLoggedIn } = authContext;
+
   if (!isLoggedIn) {
-    return showRegister
-      ? <RegisterPage onLoginClick={() => setShowRegister(false)} />
-      : <LoginPage onRegisterClick={() => setShowRegister(true)} />;
+    return showRegister ? (
+      <RegisterPage onLoginClick={() => setShowRegister(false)} />
+    ) : (
+      <LoginPage onRegisterClick={() => setShowRegister(true)} />
+    );
   }
 
   return <RentalManagementSystem />;
-}
+};
 
-function RentalManagementSystem() {
-  const { userRole, logout } = React.useContext(AuthContext)!;
+const RentalManagementSystem: React.FC = () => {
+  const authContext = useContext(AuthContext);
   const [activeItem, setActiveItem] = useState('Dashboard');
+
+  if (!authContext) {
+    throw new Error('AuthContext must be used within an AuthProvider');
+  }
+
+  const { userRole, logout } = authContext;
 
   useEffect(() => {
     if (userRole) {
@@ -118,7 +74,7 @@ function RentalManagementSystem() {
     }
   }, [userRole]);
 
-  const landlordNav = [
+  const landlordNav: NavItem[] = [
     { name: 'Dashboard', icon: BarChart2 },
     { name: 'Properties', icon: Building },
     { name: 'Tenants', icon: Users },
@@ -130,6 +86,8 @@ function RentalManagementSystem() {
   ];
 
   const renderContent = () => {
+    if (!userRole) return <LandlordDashboard />;
+
     switch (activeItem) {
       case 'Dashboard':
         switch (userRole) {
@@ -151,18 +109,25 @@ function RentalManagementSystem() {
 
   return (
     <div className="flex bg-gray-900 font-sans text-white h-screen overflow-hidden">
-      <Sidebar navigation={landlordNav} activeItem={activeItem} setActiveItem={setActiveItem} />
+      <Sidebar 
+        navigation={landlordNav} 
+        activeItem={activeItem} 
+        setActiveItem={setActiveItem} 
+      />
       <div className="flex-1 flex flex-col">
-        <Header title={activeItem} onLogout={logout} />
+        <Header 
+          title={activeItem}
+          onLogout={logout} 
+        />
         <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
           {renderContent()}
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default function App() {
+const App: React.FC = () => {
   return (
     <AuthProvider>
       <DataProvider>
@@ -170,4 +135,6 @@ export default function App() {
       </DataProvider>
     </AuthProvider>
   );
-}
+};
+
+export default App;

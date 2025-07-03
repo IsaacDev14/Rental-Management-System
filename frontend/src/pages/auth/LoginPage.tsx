@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import type { UserRole } from '../../types/auth';  // type-only import
-import { initialData as dummyInitialData } from '../../utils/data'; // Ensure this exists in utils/data.ts
+import type { UserRole } from '../../types/auth';
+import { initialData as dummyInitialData } from '../../utils/data';
 
 interface LoginPageProps {
   onRegisterClick: () => void;
@@ -10,22 +10,21 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onRegisterClick }) => {
   const { login } = useAuth();
-  const [username, setUsername] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>('landlord');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    let userId: string | null = null;
-
+    let userId = '';
+    
     if (selectedRole === 'tenant' && dummyInitialData.tenants.length > 0) {
       userId = dummyInitialData.tenants[0].id;
     } else if (selectedRole === 'landlord' && dummyInitialData.landlords.length > 0) {
       userId = dummyInitialData.landlords[0].id;
     }
-    // KRA Officer has no specific ID in demo
 
-    login(selectedRole, userId);
+    login(selectedRole, userId || '');
   };
 
   return (

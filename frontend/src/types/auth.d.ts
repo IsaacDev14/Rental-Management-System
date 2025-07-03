@@ -1,19 +1,24 @@
-// frontend/src/types/auth.d.ts
+// types/auth.ts
 
-/**
- * Defines the possible roles a user can have in the system.
- */
-export type UserRole = 'landlord' | 'tenant' | 'kra_officer';
+export type UserRole = 'landlord' | 'tenant' | 'kra_officer' | string;
 
-/**
- * Interface for the authentication context value.
- * Provides access to login status, user role, current user ID, and auth actions.
- */
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  // add other user fields if needed
+}
+
 export interface AuthContextType {
   isLoggedIn: boolean;
+  isAuthenticated: boolean;
   userRole: UserRole | null;
-  currentUserId: string | null; // ID of the currently logged-in landlord or tenant
-  login: (role: UserRole, userId?: string | null) => void;
-  register: (role: UserRole, userId?: string | null) => void;
+  currentUserId: string | null;
+  user: AuthUser | null;
+  token: string | null;
+
+  login: (email: string, password: string) => Promise<AuthUser>;
+  register: (email: string, password: string, name: string, role: UserRole) => Promise<AuthUser>;
   logout: () => void;
 }

@@ -1,4 +1,6 @@
-// frontend/src/types/models.d.ts
+// src/types/models.d.ts
+
+import type { Dispatch, SetStateAction } from 'react';
 
 /**
  * Interface for a Landlord entity.
@@ -122,7 +124,6 @@ export interface InvestmentFund {
 
 /**
  * Interface for the overall application data state.
- * This will be used by the DataContext.
  */
 export interface AppData {
   landlords: Landlord[];
@@ -134,4 +135,14 @@ export interface AppData {
   auditLog: AuditLogEntry[];
   notifications: Notification[];
   investmentFunds: InvestmentFund[];
+}
+
+/**
+ * Interface for the DataContext value.
+ */
+export interface DataContextType {
+  data: AppData;
+  setData: Dispatch<SetStateAction<AppData>>;
+  logAction: (message: string) => void;
+  sendNotification: (message: string) => void;
 }

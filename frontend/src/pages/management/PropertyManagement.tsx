@@ -13,16 +13,13 @@ const PropertyManagement: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  // Removed unused selectedProperty state
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
-  // Filter properties belonging to current landlord
   const landlordProperties = useMemo(() => {
     return data.properties.filter(p => p.landlordId === currentUserId);
   }, [data.properties, currentUserId]);
 
-  // Save (add or update) property including units
   const handleSaveProperty = (propertyData: {
     name: string;
     location: string;
@@ -65,19 +62,16 @@ const PropertyManagement: React.FC = () => {
     setEditingProperty(null);
   };
 
-  // Open edit modal and set editing property
   const handleEditPropertyClick = (property: Property) => {
     setEditingProperty(property);
     setIsModalOpen(true);
   };
 
-  // Open delete confirmation modal
   const handleDeletePropertyClick = (property: Property) => {
     setPropertyToDelete(property);
     setIsDeleteConfirmOpen(true);
   };
 
-  // Perform delete property and related cleanup
   const performDeleteProperty = () => {
     if (propertyToDelete) {
       setData(prev => {
@@ -112,7 +106,6 @@ const PropertyManagement: React.FC = () => {
     }
   };
 
-  // Component: Form to add/edit property and units
   const PropertyForm: React.FC<{
     property: Property | null;
     onSave: (data: { name: string; location: string; imageUrl: string; units: Unit[] }) => void;
@@ -129,12 +122,12 @@ const PropertyManagement: React.FC = () => {
               id: `unit${Date.now()}`,
               name: '',
               rent: 0,
+              type: 'residential',
               tenantId: null,
             },
           ]
     );
 
-    // Add a new blank unit row
     const addUnit = () => {
       setUnits(prev => [
         ...prev,
@@ -142,44 +135,40 @@ const PropertyManagement: React.FC = () => {
           id: `unit${Date.now() + Math.random()}`,
           name: '',
           rent: 0,
+          type: 'residential',
           tenantId: null,
         },
       ]);
     };
 
-    // Remove a unit by id
     const removeUnit = (unitId: string) => {
       setUnits(prev => prev.filter(u => u.id !== unitId));
     };
 
-    // Update unit field (name, rent, availability)
-    const updateUnitField = (unitId: string, field: keyof Omit<Unit, 'id' | 'tenantId'>, value: string | number | boolean) => {
+    const updateUnitField = (
+      unitId: string,
+      field: keyof Unit,
+      value: string | number | null
+    ) => {
       setUnits(prev =>
         prev.map(u =>
           u.id === unitId
             ? {
                 ...u,
                 [field]: value,
-                // If availability changed, adjust tenantId accordingly:
-                ...(field === 'available' && value === false ? { tenantId: null } : {}),
               }
             : u
         )
       );
     };
 
-    // Determine if unit is available (tenantId null = available)
-    // We'll store availability as `available` boolean in UI for easier toggling
-    // For that, map tenantId null = available true, else false
     const unitAvailable = (unit: Unit) => unit.tenantId == null;
 
-    // On submit, convert availability to tenantId (null if available)
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      // Sanitize units before save: keep tenantId only if occupied, else null
       const sanitizedUnits = units.map(u => ({
         ...u,
-        tenantId: unitAvailable(u) ? null : u.tenantId, // Keep tenantId if occupied, else null
+        tenantId: unitAvailable(u) ? null : u.tenantId,
       }));
 
       onSave({ name, location, imageUrl, units: sanitizedUnits });
@@ -211,10 +200,9 @@ const PropertyManagement: React.FC = () => {
           onChange={e => setImageUrl(e.target.value)}
         />
 
-        {/* Units Section */}
         <div>
           <label className="block text-sm font-medium text-gray-200 mb-2">Units</label>
-          {units.map((unit, idx) => (
+          {units.map(unit => (
             <div
               key={unit.id}
               className="flex items-center space-x-2 mb-2 bg-gray-700 p-3 rounded-md"
@@ -244,8 +232,13 @@ const PropertyManagement: React.FC = () => {
                   checked={unitAvailable(unit)}
                   onChange={e => {
                     const available = e.target.checked;
-                    // If available = true, tenantId = null; if false, keep tenantId (or assign null)
-                    updateUnitField(unit.id, 'tenantId', available ? null : unit.tenantId);
+                    setUnits(prev =>
+                      prev.map(u =>
+                        u.id === unit.id
+                          ? { ...u, tenantId: available ? null : u.tenantId }
+                          : u
+                      )
+                    );
                   }}
                   className="form-checkbox h-5 w-5 text-cyan-400"
                 />
@@ -286,7 +279,6 @@ const PropertyManagement: React.FC = () => {
 
   return (
     <>
-      {/* Add/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -299,7 +291,6 @@ const PropertyManagement: React.FC = () => {
         />
       </Modal>
 
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
@@ -308,7 +299,8 @@ const PropertyManagement: React.FC = () => {
         <div className="p-4 text-center">
           <p className="text-lg text-white mb-8">
             Are you sure you want to delete property{' '}
-            <span className="font-bold text-red-400">"{propertyToDelete?.name}"</span>? This action cannot be undone.
+            <span className="font-bold text-red-400">"{propertyToDelete?.name}"</span>? This action
+            cannot be undone.
           </p>
           <div className="flex justify-center space-x-4">
             <Button variant="secondary" onClick={() => setIsDeleteConfirmOpen(false)}>
@@ -339,7 +331,10 @@ const PropertyManagement: React.FC = () => {
             landlordProperties.map(p => {
               const occupied = p.units.filter(u => u.tenantId).length;
               const total = p.units.length;
-              const income = p.units.reduce((sum, unit) => (unit.tenantId ? sum + unit.rent : sum), 0);
+              const income = p.units.reduce(
+                (sum, unit) => (unit.tenantId ? sum + unit.rent : sum),
+                0
+              );
 
               return (
                 <div
@@ -361,7 +356,6 @@ const PropertyManagement: React.FC = () => {
                     <p className="text-sm text-emerald-400">KES {income.toLocaleString()} / month</p>
                   </div>
                   <div>
-                    {/* List unit details */}
                     <h5 className="font-semibold text-cyan-300 mb-2">Units Details:</h5>
                     <ul className="text-sm text-gray-300 space-y-1 max-h-32 overflow-auto">
                       {p.units.map(unit => (
@@ -380,15 +374,16 @@ const PropertyManagement: React.FC = () => {
                     </ul>
                   </div>
                   <div className="flex justify-between items-center mt-4">
-                    {/* View button placeholder, implement view logic if needed */}
-                    <Button variant="secondary" disabled>
-                      View
-                    </Button>
+                    <div />
                     <div className="flex space-x-2">
                       <Button variant="ghost" size="sm" onClick={() => handleEditPropertyClick(p)}>
                         <Edit size={18} />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeletePropertyClick(p)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeletePropertyClick(p)}
+                      >
                         <Trash2 size={18} />
                       </Button>
                     </div>

@@ -25,6 +25,7 @@ const TenantManagement: React.FC = () => {
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Ending Soon' | 'Expired'>('All');
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null); // added to view tenant detail
 
   // Properties belonging to current landlord
   const landlordProperties = useMemo(() => {

@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import React, { useState, useEffect, useContext } from "react";
 import {
   Building,
@@ -45,7 +43,7 @@ import AuditLogView from "./pages/audit/AuditLogView";
 interface NavItem {
   name: string;
   icon: React.ElementType;
-  path: string; // add path for routing
+  path: string;
 }
 
 const landlordNav: NavItem[] = [
@@ -91,52 +89,51 @@ const RentalManagementSystem: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Derive active item from URL path
-  const activeItem = landlordNav.find(nav => location.pathname.startsWith(nav.path))?.name || "Dashboard";
+  // Find active nav item based on if current path *starts with* the nav path
+  const activeItem =
+    landlordNav.find((nav) => location.pathname.startsWith(nav.path))?.name || "Dashboard";
 
-  // Redirect user to /dashboard on login or if unknown path
+  // Redirect to dashboard if root or unknown path
   useEffect(() => {
-    if (location.pathname === "/" || !landlordNav.some(nav => location.pathname.startsWith(nav.path))) {
+    if (location.pathname === "/" || !landlordNav.some((nav) => location.pathname.startsWith(nav.path))) {
       navigate("/dashboard", { replace: true });
     }
   }, [location.pathname, navigate]);
 
-  // Render page based on path and userRole
+  // Render page based on path and user role
   const renderContent = () => {
-    switch (location.pathname) {
-      case "/dashboard":
-        switch (userRole) {
-          case "landlord":
-            return <LandlordDashboard />;
-          case "tenant":
-            return <TenantDashboard />;
-          case "kra_officer":
-            return <KRADashboard />;
-          default:
-            return <LandlordDashboard />;
-        }
-      case "/properties":
-        return <PropertyManagement />;
-      case "/tenants":
-        return <TenantManagement />;
-      case "/payments":
-        return <PaymentManagement />;
-      case "/expenses":
-        return <ExpenseTracking />;
-      case "/deposits":
-        return <RentalDepositInvestment />;
-      case "/reports":
-        return <Reports />;
-      case "/audit-log":
-        return <AuditLogView />;
-      default:
-        return <LandlordDashboard />;
+    if (location.pathname.startsWith("/dashboard")) {
+      switch (userRole) {
+        case "landlord":
+          return <LandlordDashboard />;
+        case "tenant":
+          return <TenantDashboard />;
+        case "kra_officer":
+          return <KRADashboard />;
+        default:
+          return <LandlordDashboard />;
+      }
+    } else if (location.pathname.startsWith("/properties")) {
+      return <PropertyManagement />;
+    } else if (location.pathname.startsWith("/tenants")) {
+      return <TenantManagement />;
+    } else if (location.pathname.startsWith("/payments")) {
+      return <PaymentManagement />;
+    } else if (location.pathname.startsWith("/expenses")) {
+      return <ExpenseTracking />;
+    } else if (location.pathname.startsWith("/deposits")) {
+      return <RentalDepositInvestment />;
+    } else if (location.pathname.startsWith("/reports")) {
+      return <Reports />;
+    } else if (location.pathname.startsWith("/audit-log")) {
+      return <AuditLogView />;
+    } else {
+      return <LandlordDashboard />;
     }
   };
 
-  // On sidebar click, navigate to the path
   const handleSetActiveItem = (itemName: string) => {
-    const navItem = landlordNav.find(n => n.name === itemName);
+    const navItem = landlordNav.find((n) => n.name === itemName);
     if (navItem) {
       navigate(navItem.path);
     }

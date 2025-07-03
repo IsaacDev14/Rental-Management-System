@@ -1,12 +1,12 @@
-// src/components/common/Sidebar.tsx
-
 import React, { useContext, useMemo } from "react";
 import { LogOut } from "lucide-react";
 import { AuthContext } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface NavItem {
   name: string;
   icon: React.ElementType;
+  path: string;
 }
 
 interface SidebarProps {
@@ -17,6 +17,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem }) => {
   const authContext = useContext(AuthContext);
+  const navigate = useNavigate();
 
   if (!authContext) {
     throw new Error("AuthContext is undefined. Make sure your app is wrapped with AuthProvider.");
@@ -27,7 +28,6 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem
   const userDisplay = useMemo(() => {
     if (user) return { fullName: user.name, role: user.role };
 
-    // Fallback for demo purposes
     let fullName = "Current User";
     if (userRole === "landlord") fullName = "Landlord Demo";
     else if (userRole === "tenant") fullName = "Tenant Demo";
@@ -35,6 +35,11 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem
 
     return { fullName, role: userRole };
   }, [userRole, user]);
+
+  const handleClick = (itemName: string, path: string) => {
+    setActiveItem(itemName);
+    navigate(path);
+  };
 
   return (
     <aside
@@ -52,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              setActiveItem(item.name);
+              handleClick(item.name, item.path);
             }}
             className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200
               ${
@@ -65,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeItem, setActiveItem
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setActiveItem(item.name);
+                handleClick(item.name, item.path);
               }
             }}
             aria-current={activeItem === item.name ? "page" : undefined}

@@ -50,7 +50,7 @@ const LandingPage: React.FC = () => {
       imageUrls: [
         "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bW91bnRhaW4lMjBjYWJpbnxlbnwwfHwwfHx8MA%3D%3D",
         "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Zm9yZXN0JTIwY2FiaW58ZW58MHx8fHwxNzAxOTU3ODY5fDA%3D",
-        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bW91bnRhaW4lMjBsYWtlfGVufDB8fHx8MA%3D%3D"
+        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bW91bnRhaW4lMjBsYWtlfGVufDB8fHx8MA%3D%3D",
       ],
       description:
         "Luxurious villa with direct beach access, private pool, and stunning ocean views.",
@@ -544,7 +544,10 @@ const LandingPage: React.FC = () => {
                 Log in
               </button>
               <button
-                onClick={() => { navigate('/Register'); setIsDropdownOpen(false); }}
+                onClick={() => {
+                  navigate("/Register");
+                  setIsDropdownOpen(false);
+                }}
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 rounded-lg"
               >
                 <svg
@@ -595,7 +598,7 @@ const LandingPage: React.FC = () => {
 
       {/* Category Scrollbar */}
       <section className="px-6 md:px-12 py-4 bg-white overflow-x-auto">
-        <div className="flex space-x-8">
+        <div className="flex space-x-8 justify-center"> {/* Added justify-center here */}
           {categories.map((category, index) => (
             <div
               key={index}
@@ -689,173 +692,57 @@ const LandingPage: React.FC = () => {
           <div>
             <h3 className="font-bold text-gray-800 text-lg mb-4">Support</h3>
             <ul className="space-y-3">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Safety information
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Cancellation options
-                </a>
-              </li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Help Center</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Safety information</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Cancellation options</a></li>
             </ul>
           </div>
           <div>
             <h3 className="font-bold text-gray-800 text-lg mb-4">Community</h3>
             <ul className="space-y-3">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Disaster relief
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Support refugees
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Combating discrimination
-                </a>
-              </li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Disaster relief</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Support refugees</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Combating discrimination</a></li>
             </ul>
           </div>
           <div>
             <h3 className="font-bold text-gray-800 text-lg mb-4">Hosting</h3>
             <ul className="space-y-3">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Try hosting
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  AirCover for Hosts
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Explore hosting resources
-                </a>
-              </li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Try hosting</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">AirCover for Hosts</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Explore hosting resources</a></li>
             </ul>
           </div>
           <div>
-            <h3 className="font-bold text-gray-800 text-lg mb-4">
-              KenyaRentals
-            </h3>
+            <h3 className="font-bold text-gray-800 text-lg mb-4">KenyaRentals</h3>
             <ul className="space-y-3">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Newsroom
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  Investors
-                </a>
-              </li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Newsroom</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Careers</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">Investors</a></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center space-x-4 mb-4 md:mb-0">
-            <span className="text-sm text-gray-600">
-              © 2025 KenyaRentals, Inc.
-            </span>
-            <a
-              href="#"
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              Privacy
-            </a>
-            <a
-              href="#"
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              Terms
-            </a>
-            <a
-              href="#"
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              Sitemap
-            </a>
+            <span className="text-sm text-gray-600">© 2025 KenyaRentals, Inc.</span>
+            <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200">Privacy</a>
+            <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200">Terms</a>
+            <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200">Sitemap</a>
           </div>
           <div className="flex items-center space-x-6">
             <div className="flex items-center">
-              <svg
-                className="h-5 w-5 text-gray-600 mr-2"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-5 w-5 text-gray-600 mr-2" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10zm0 18.75c-4.832 0-8.75-3.918-8.75-8.75S7.168 3.25 12 3.25s8.75 3.918 8.75 8.75-3.918 8.75-8.75 8.75zM12 6.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zm0 9a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" />
               </svg>
-              <span className="text-sm font-medium text-gray-600">
-                English (US)
-              </span>
+              <span className="text-sm font-medium text-gray-600">English (US)</span>
             </div>
             <div className="flex items-center">
               <span className="text-sm font-medium text-gray-600">$ USD</span>
             </div>
             <div className="flex space-x-4">
-              <a
-                href="#"
-                className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-              >
+              <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors duration-200">
                 {/* Corrected: Wrapped path data in an SVG tag */}
-                <svg
-                  className="h-5 w-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M22.675 0H1.325C.593 0 0 .593 0 1.325v21.351C0 23.407.593 24 1.325 24H12.82v-9.294H9.692V11.69h3.123V8.75c0-3.116 1.892-4.816 4.657-4.816 1.325 0 2.463.098 2.795.142v3.25l-1.938.001c-1.512 0-1.807.718-1.807 1.775V11.69h3.64l-.576 3.016h-3.064V24h6.115c.732 0 1.325-.593 1.325-1.325V1.325C24 .593 23.407 0 22.675 0z" />
                 </svg>
               </a>

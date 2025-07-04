@@ -48,9 +48,9 @@ const LandingPage: React.FC = () => {
       location: "Diani Beach, Kwale",
       price: "KSh 25,000 / night",
       imageUrls: [
-        "https://images.unsplash.com/photo-1596436889106-be35e1f0e799?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YmVhY2h2aWxsYXxlbnwwfHwwfHx8MA%3D%3D",
-        "https://images.unsplash.com/photo-1570539139266-9d3b3c3e3c3e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YmVhY2h2aWxsYSUyMHBvb2x8ZW58MHx8fHwxNzAxOTU3NjEwfDA%3D",
-        "https://images.unsplash.com/photo-1507525428034-b723cf961c3e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8YmVhY2h2aWxsYSUyMG9jZWFuJTIwdmlld3xlbnwwfHwwfHx8MA%3D%3D",
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bW91bnRhaW4lMjBjYWJpbnxlbnwwfHwwfHx8MA%3D%3D",
+        "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Zm9yZXN0JTIwY2FiaW58ZW58MHx8fHwxNzAxOTU3ODY5fDA%3D",
+        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bW91bnRhaW4lMjBsYWtlfGVufDB8fHx8MA%3D%3D"
       ],
       description:
         "Luxurious villa with direct beach access, private pool, and stunning ocean views.",

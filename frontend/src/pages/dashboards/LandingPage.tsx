@@ -192,51 +192,51 @@ const LandingPage: React.FC = () => {
   const categories: Category[] = [
     {
       name: "Amazing views",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-indigo-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`,
     },
     {
       name: "Beachfront",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-blue-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
     },
     {
       name: "Cabins",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-green-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>`,
     },
     {
       name: "Treehouses",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10l-2 2m0 0l-2-2m2 2V3m2 17a2 2 0 11-4 0 2 2 0 014 0zM7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H7a2 2 0 00-2 2v11a2 2 0 002 2z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-yellow-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10l-2 2m0 0l-2-2m2 2V3m2 17a2 2 0 11-4 0 2 2 0 014 0zM7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H7a2 2 0 00-2 2v11a2 2 0 002 2z"></path></svg>`,
     },
     {
       name: "Glamping",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-purple-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`,
     },
     {
       name: "Tiny homes",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-pink-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`,
     },
     {
       name: "Unique stays",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7m0 0L9 7"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-orange-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7m0 0L9 7"></path></svg>`,
     },
     {
       name: "Castles",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-red-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>`,
     },
     {
       name: "Lakeside",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-teal-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
     },
     {
       name: "Farms",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586L4 13.586V10a2 2 0 012-2h11z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-lime-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586L4 13.586V10a2 2 0 012-2h11z"></path></svg>`,
     },
     {
       name: "Desert",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h1M3 12H2M18.364 5.636l-.707-.707M6.343 17.657l-.707.707M16.95 18.364l.707-.707M7.05 5.636l-.707.707M12 12a5 5 0 110-10 5 5 0 010 10z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-amber-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h1M3 12H2M18.364 5.636l-.707-.707M6.343 17.657l-.707.707M16.95 18.364l.707-.707M7.05 5.636l-.707.707M12 12a5 5 0 110-10 5 5 0 010 10z"></path></svg>`,
     },
     {
       name: "Ski-in/out",
-      icon: `<svg class="h-6 w-6 text-gray-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10l-2 2m0 0l-2-2m2 2V3m2 17a2 2 0 11-4 0 2 2 0 014 0zM7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H7a2 2 0 00-2 2v11a2 2 0 002 2z"></path></svg>`,
+      icon: `<svg class="h-6 w-6 text-sky-700 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10l-2 2m0 0l-2-2m2 2V3m2 17a2 2 0 11-4 0 2 2 0 014 0zM7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H7a2 2 0 00-2 2v11a2 2 0 002 2z"></path></svg>`,
     },
   ];
 
@@ -354,7 +354,7 @@ const LandingPage: React.FC = () => {
           {/* Like/Heart Icon */}
           <button className="absolute top-3 right-3 z-10 p-2 bg-white bg-opacity-80 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-200 focus:outline-none">
             <svg
-              className="h-5 w-5 text-gray-600 hover:text-red-500"
+              className="h-5 w-5 text-red-500 hover:text-red-700" // Changed to red-500
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -528,7 +528,7 @@ const LandingPage: React.FC = () => {
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 rounded-lg"
               >
                 <svg
-                  className="h-5 w-5 mr-3 text-gray-600"
+                  className="h-5 w-5 mr-3 text-gray-600" // Kept as gray-600 for consistency with dropdown text
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -551,7 +551,7 @@ const LandingPage: React.FC = () => {
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 rounded-lg"
               >
                 <svg
-                  className="h-5 w-5 mr-3 text-gray-600"
+                  className="h-5 w-5 mr-3 text-gray-600" // Kept as gray-600 for consistency with dropdown text
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -576,7 +576,7 @@ const LandingPage: React.FC = () => {
       <div className="md:hidden px-6 py-4 bg-white">
         <div className="flex items-center border border-gray-300 rounded-full py-3 px-4 shadow-sm">
           <svg
-            className="h-5 w-5 text-gray-500 mr-2"
+            className="h-5 w-5 text-gray-500 mr-2" // Kept as gray-500
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -598,7 +598,7 @@ const LandingPage: React.FC = () => {
 
       {/* Category Scrollbar */}
       <section className="px-6 md:px-12 py-4 bg-white overflow-x-auto">
-        <div className="flex space-x-8 justify-center"> {/* Added justify-center here */}
+        <div className="flex space-x-8 justify-center">
           {categories.map((category, index) => (
             <div
               key={index}

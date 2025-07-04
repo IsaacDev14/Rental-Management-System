@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useEffect, useContext, useState } from "react"; // Re-added useState
 import {
   Building,
   Users,
@@ -14,12 +14,13 @@ import { AuthContext } from "./contexts/AuthContext";
 import { AuthProvider } from "./contexts/AuthProvider";
 import { DataProvider } from "./contexts/DataProvider";
 
-import { BrowserRouter as Router, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 // Dashboard imports
 import LandlordDashboard from "./pages/dashboards/LandlordDashboard";
 import TenantDashboard from "./pages/dashboards/TenantDashboard";
 import KRADashboard from "./pages/dashboards/KRADashboard";
+import LandingPage from "./pages/dashboards/LandingPage"; // Import LandingPage
 
 // Auth pages
 import LoginPage from "./pages/auth/LoginPage";
@@ -57,25 +58,48 @@ const landlordNav: NavItem[] = [
   { name: "Audit Log", icon: History, path: "/audit-log" },
 ];
 
-const AuthWrapper: React.FC = () => {
+// This component will handle the login/register page toggling
+const AuthPageWrapper: React.FC = () => {
   const authContext = useContext(AuthContext);
   const [showRegister, setShowRegister] = useState(false);
+  const navigate = useNavigate();
 
-  if (!authContext) {
-    throw new Error("AuthContext must be used within an AuthProvider");
+  // If user is already logged in, redirect them to the dashboard
+  useEffect(() => {
+    if (authContext?.isLoggedIn) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [authContext?.isLoggedIn, navigate]);
+
+  if (authContext?.isLoggedIn) {
+    return null; // Don't render anything if already logged in (will redirect)
   }
 
-  const { isLoggedIn } = authContext;
+  return showRegister ? (
+    <RegisterPage onLoginClick={() => setShowRegister(false)} />
+  ) : (
+    <LoginPage onRegisterClick={() => setShowRegister(true)} />
+  );
+};
 
-  if (!isLoggedIn) {
-    return showRegister ? (
-      <RegisterPage onLoginClick={() => setShowRegister(false)} />
-    ) : (
-      <LoginPage onRegisterClick={() => setShowRegister(true)} />
-    );
+
+// This component will act as a protected route wrapper
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const authContext = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authContext || !authContext.isLoggedIn) {
+      // Redirect to login if not authenticated
+      navigate("/login", { replace: true });
+    }
+  }, [authContext, navigate]);
+
+  if (!authContext || !authContext.isLoggedIn) {
+    return null; // Render nothing while redirecting
   }
 
-  return <RentalManagementSystem />;
+  return <>{children}</>; // Render children if authenticated
 };
 
 const RentalManagementSystem: React.FC = () => {
@@ -93,9 +117,12 @@ const RentalManagementSystem: React.FC = () => {
   const activeItem =
     landlordNav.find((nav) => location.pathname.startsWith(nav.path))?.name || "Dashboard";
 
-  // Redirect to dashboard if root or unknown path
+  // Redirect to dashboard if at root of authenticated system or unknown path
   useEffect(() => {
-    if (location.pathname === "/" || !landlordNav.some((nav) => location.pathname.startsWith(nav.path))) {
+    // This useEffect ensures that if a user is logged in and tries to go to a non-existent
+    // authenticated path, they are redirected to their dashboard.
+    // It should *not* redirect from '/' as '/' is now handled by LandingPage.
+    if (!landlordNav.some((nav) => location.pathname.startsWith(nav.path)) && location.pathname !== "/") {
       navigate("/dashboard", { replace: true });
     }
   }, [location.pathname, navigate]);
@@ -128,6 +155,7 @@ const RentalManagementSystem: React.FC = () => {
     } else if (location.pathname.startsWith("/audit-log")) {
       return <AuditLogView />;
     } else {
+      // Fallback for any other path within the authenticated system
       return <LandlordDashboard />;
     }
   };
@@ -155,7 +183,22 @@ const App: React.FC = () => {
     <AuthProvider>
       <DataProvider>
         <Router>
-          <AuthWrapper />
+          <Routes>
+            {/* Public Landing Page - accessible without login */}
+            <Route path="/" element={<LandingPage />} />
+
+            {/* Authentication Pages - wrapped in AuthPageWrapper */}
+            <Route path="/login" element={<AuthPageWrapper />} />
+            {/* The /register route is now handled internally by AuthPageWrapper */}
+
+            {/* Protected Routes - require authentication */}
+            {/* All routes under /dashboard, /properties, etc., will be protected */}
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <RentalManagementSystem />
+              </ProtectedRoute>
+            } />
+          </Routes>
         </Router>
       </DataProvider>
     </AuthProvider>

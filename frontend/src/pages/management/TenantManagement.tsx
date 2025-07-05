@@ -208,11 +208,51 @@ const TenantManagement: React.FC = () => {
 
     return (
       <form onSubmit={handleSubmit} className="space-y-6">
-        <InputField id="name" type="text" label="Tenant Name" value={formData.name} onChange={handleChange} error={errors.name} required />
-        <InputField id="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} error={errors.email} required />
-        <InputField id="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} error={errors.phone} required />
-        <InputField id="leaseStart" type="date" label="Lease Start Date" value={formData.leaseStart} onChange={handleChange} error={errors.leaseStart} required />
-        <InputField id="leaseEnd" type="date" label="Lease End Date" value={formData.leaseEnd} onChange={handleChange} error={errors.leaseEnd} required />
+        <InputField
+          id="name"
+          type="text"
+          label="Tenant Name"
+          value={formData.name}
+          onChange={handleChange}
+          error={errors.name}
+          required
+        />
+        <InputField
+          id="email"
+          type="email"
+          label="Email Address"
+          value={formData.email}
+          onChange={handleChange}
+          error={errors.email}
+          required
+        />
+        <InputField
+          id="phone"
+          type="tel"
+          label="Phone Number"
+          value={formData.phone}
+          onChange={handleChange}
+          error={errors.phone}
+          required
+        />
+        <InputField
+          id="leaseStart"
+          type="date"
+          label="Lease Start Date"
+          value={formData.leaseStart}
+          onChange={handleChange}
+          error={errors.leaseStart}
+          required
+        />
+        <InputField
+          id="leaseEnd"
+          type="date"
+          label="Lease End Date"
+          value={formData.leaseEnd}
+          onChange={handleChange}
+          error={errors.leaseEnd}
+          required
+        />
         <SelectField
           id="propertyId"
           label="Property"
@@ -236,7 +276,7 @@ const TenantManagement: React.FC = () => {
           required
           placeholder={!formData.propertyId ? "Select a property first" : (availableUnits.length === 0 ? "No vacant units available" : "Select Unit")}
         />
-        <div className="flex justify-end space-x-4 pt-4">
+        <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
           <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
           <Button type="submit" variant="primary">{tenant ? "Update Tenant" : "Add Tenant"}</Button>
         </div>
@@ -249,7 +289,7 @@ const TenantManagement: React.FC = () => {
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={`Confirm Delete ${itemType}`}>
         <div className="p-4 text-center">
-          <AlertTriangle size={64} className="text-red-500 mx-auto mb-6" />
+          <AlertTriangle size={64} color="#f87171" className="mx-auto mb-6" />
           <p className="text-lg text-white mb-8">
             Are you sure you want to delete {itemType} <span className="font-bold text-red-400">"{itemName}"</span>? This action cannot be undone.
           </p>
@@ -281,8 +321,8 @@ const TenantManagement: React.FC = () => {
           <p><strong>Lease End:</strong> {tenant.leaseEnd}</p>
           <p><strong>Status:</strong> {leaseStatus}</p>
           <div className="flex justify-end">
-            <Button onClick={onClose} variant="secondary">
-              Close <X className="inline ml-1" size={16} />
+            <Button onClick={onClose} variant="secondary" className="inline-flex items-center">
+              Close <X className="ml-1" size={16} color="currentColor" />
             </Button>
           </div>
         </div>
@@ -305,9 +345,13 @@ const TenantManagement: React.FC = () => {
       key: 'contact',
       header: 'Contact',
       render: (row: Tenant) => (
-        <div className="flex flex-col space-y-1">
-          <span className="flex items-center text-gray-300"><Mail size={14} className="mr-2 text-gray-500" />{row.email}</span>
-          <span className="flex items-center text-gray-300"><Phone size={14} className="mr-2 text-gray-500" />{row.phone}</span>
+        <div className="flex flex-col space-y-1 text-gray-300">
+          <span className="flex items-center">
+            <Mail size={14} color="#94a3b8" className="mr-2" />{row.email}
+          </span>
+          <span className="flex items-center">
+            <Phone size={14} color="#94a3b8" className="mr-2" />{row.phone}
+          </span>
         </div>
       ),
     },
@@ -336,13 +380,13 @@ const TenantManagement: React.FC = () => {
       render: (row: Tenant) => (
         <div className="flex space-x-2">
           <Button variant="ghost" size="sm" onClick={() => handleEditTenantClick(row)} title="Edit Tenant">
-            <Edit size={18} />
+            <Edit size={18} color="#60a5fa" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleDeleteTenantClick(row)} title="Delete Tenant">
-            <Trash2 size={18} />
+            <Trash2 size={18} color="#f87171" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedTenant(row)} title="View Details">
-            <Info size={18} />
+            <Info size={18} color="#38bdf8" />
           </Button>
         </div>
       ),
@@ -370,12 +414,16 @@ const TenantManagement: React.FC = () => {
 
       <TenantDetailModal tenant={selectedTenant} onClose={() => setSelectedTenant(null)} />
 
-      <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 text-white">
+      <div className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 text-white max-w-full overflow-x-auto">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
           <h3 className="text-xl font-semibold">My Tenants</h3>
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
             <div className="relative flex-grow w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Search
+                size={18}
+                color="#94a3b8"
+                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              />
               <input
                 type="text"
                 placeholder="Search tenants..."
@@ -395,10 +443,14 @@ const TenantManagement: React.FC = () => {
                 <option value="Ending Soon">Ending Soon</option>
                 <option value="Expired">Expired</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+              <ChevronDown
+                size={18}
+                color="#94a3b8"
+                className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              />
             </div>
-            <Button onClick={handleAddTenantClick} className="w-full sm:w-auto">
-              <PlusCircle className="mr-2" /> Add Tenant
+            <Button className="w-full sm:w-auto flex items-center justify-center" onClick={handleAddTenantClick}>
+              <PlusCircle size={20} color="#06b6d4" className="mr-2" /> Add Tenant
             </Button>
           </div>
         </div>

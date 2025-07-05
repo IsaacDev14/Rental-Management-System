@@ -1,16 +1,18 @@
 import { Request, Response } from 'express';
 import Tenant from '../models/Tenant';
 
-export const getTenants = async (_req: Request, res: Response) => {
+// Get all tenants
+export const getTenants = async (_req: Request, res: Response): Promise<void> => {
   try {
     const tenants = await Tenant.find();
     res.json(tenants);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch tenants' });
   }
 };
 
-export const createTenant = async (req: Request, res: Response) => {
+// Create a new tenant
+export const createTenant = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       name,
@@ -23,10 +25,11 @@ export const createTenant = async (req: Request, res: Response) => {
     } = req.body;
 
     if (!name || !email || !phone || !leaseStart || !leaseEnd || !propertyId || !unitId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Missing required tenant fields',
         body: req.body,
       });
+      return;
     }
 
     const newTenant = new Tenant({
@@ -41,30 +44,33 @@ export const createTenant = async (req: Request, res: Response) => {
 
     const savedTenant = await newTenant.save();
     res.status(201).json(savedTenant);
-  } catch (error: any) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
     res.status(400).json({
       error: 'Failed to create tenant',
-      details: error.message,
+      details: message,
     });
   }
 };
 
-export const updateTenant = async (req: Request, res: Response) => {
+// Update tenant
+export const updateTenant = async (req: Request, res: Response): Promise<void> => {
   try {
     const updated = await Tenant.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
     res.json(updated);
-  } catch (error) {
+  } catch {
     res.status(400).json({ error: 'Failed to update tenant' });
   }
 };
 
-export const deleteTenant = async (req: Request, res: Response) => {
+// Delete tenant
+export const deleteTenant = async (req: Request, res: Response): Promise<void> => {
   try {
     await Tenant.findByIdAndDelete(req.params.id);
     res.status(204).send();
-  } catch (error) {
+  } catch {
     res.status(400).json({ error: 'Failed to delete tenant' });
   }
 };

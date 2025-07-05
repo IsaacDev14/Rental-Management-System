@@ -1,7 +1,9 @@
 // src/contexts/DataProvider.tsx
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { DataContext } from './DataContext';
 import type { AppData, DataContextType } from '../types/models';
+import { useAuth } from '../hooks/useAuth';
+import api from '../utils/api'; // fetch directly here if avoiding circular hook imports
 
 interface DataProviderProps {
   children: React.ReactNode;
@@ -21,6 +23,7 @@ const initialData: AppData = {
 
 export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [data, setData] = useState<AppData>(initialData);
+  const { currentUserId } = useAuth();
 
   const logAction = useCallback((message: string) => {
     setData((prev) => ({
@@ -35,6 +38,34 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       notifications: [{ id: Date.now(), read: false, message }, ...prev.notifications],
     }));
   }, []);
+
+  // 🔥 Fetch properties for the logged-in landlord
+  const fetchProperties = useCallback(async () => {
+    try {
+      const res = await api.get(`/properties/${currentUserId}`);
+      setData(prev => ({ ...prev, properties: res.data }));
+    } catch (err) {
+      console.error('Failed to fetch properties:', err);
+    }
+  }, [currentUserId]);
+
+  // 🔥 Fetch tenants
+  const fetchTenants = useCallback(async () => {
+    try {
+      const res = await api.get('/tenants');
+      setData(prev => ({ ...prev, tenants: res.data }));
+    } catch (err) {
+      console.error('Failed to fetch tenants:', err);
+    }
+  }, []);
+
+  // 🚀 Auto-fetch when the app loads
+  useEffect(() => {
+    if (currentUserId) {
+      fetchProperties();
+      fetchTenants();
+    }
+  }, [currentUserId, fetchProperties, fetchTenants]);
 
   const dataValue: DataContextType = useMemo(() => ({
     data,

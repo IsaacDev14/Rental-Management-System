@@ -1,5 +1,3 @@
-// src/pages/PropertyManagement.tsx
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlusCircle, Edit, Trash2, Plus, X } from 'lucide-react';
 import { useData } from '../../hooks/useData';
@@ -12,11 +10,13 @@ import type { Property, Unit } from '../../types/models';
 const PropertyManagement: React.FC = () => {
   const {
     data,
-    setData,
-    logAction,
-    sendNotification,
+    // setData,
+    // logAction,
+    // sendNotification,
     fetchProperties,
     addProperty,
+    updateProperty,
+    deleteProperty,
   } = useData();
 
   const { currentUserId } = useAuth();
@@ -41,21 +41,14 @@ const PropertyManagement: React.FC = () => {
     units: Unit[];
   }) => {
     if (editingProperty) {
-      logAction(`Updated property (local): ${propertyData.name}`);
-      setData(prev => ({
-        ...prev,
-        properties: prev.properties.map(p =>
-          p.id === editingProperty.id
-            ? {
-                ...p,
-                name: propertyData.name,
-                location: propertyData.location,
-                images: [propertyData.imageUrl],
-                units: propertyData.units,
-              }
-            : p
-        ),
-      }));
+      await updateProperty({
+        ...editingProperty,
+        name: propertyData.name,
+        location: propertyData.location,
+        images: [propertyData.imageUrl],
+        units: propertyData.units,
+      });
+      await fetchProperties();
     } else {
       const newProperty = {
         name: propertyData.name,
@@ -67,7 +60,7 @@ const PropertyManagement: React.FC = () => {
       };
 
       await addProperty(newProperty);
-      await fetchProperties(); // 🔁 Re-fetch to ensure the new property is visible after refresh
+      await fetchProperties();
     }
 
     setIsModalOpen(false);
@@ -84,14 +77,10 @@ const PropertyManagement: React.FC = () => {
     setIsDeleteConfirmOpen(true);
   };
 
-  const performDeleteProperty = () => {
+  const performDeleteProperty = async () => {
     if (propertyToDelete) {
-      setData(prev => {
-        const updatedProperties = prev.properties.filter(p => p.id !== propertyToDelete.id);
-        return { ...prev, properties: updatedProperties };
-      });
-      logAction(`Deleted property (local): ${propertyToDelete.name}`);
-      sendNotification(`Property "${propertyToDelete.name}" deleted.`);
+      await deleteProperty(propertyToDelete.id);
+      await fetchProperties();
       setIsDeleteConfirmOpen(false);
       setPropertyToDelete(null);
     }
@@ -332,7 +321,7 @@ const PropertyManagement: React.FC = () => {
 
               return (
                 <div
-                  key={p.id} // <- 🔑 Make sure the key is unique
+                  key={p.id}
                   className="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700 flex flex-col justify-between hover:scale-105 transition-transform"
                 >
                   <div>

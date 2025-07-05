@@ -14,7 +14,6 @@ export const useData = () => {
 
   const { data, setData, logAction, sendNotification } = context;
 
-  // ✅ Fetch only the properties for this landlord
   const fetchProperties = useCallback(async () => {
     try {
       const res = await api.get(`/properties/${currentUserId}`);
@@ -24,7 +23,6 @@ export const useData = () => {
     }
   }, [setData, currentUserId]);
 
-  // ✅ Fetch all tenants
   const fetchTenants = useCallback(async () => {
     try {
       const res = await api.get('/tenants');
@@ -34,7 +32,6 @@ export const useData = () => {
     }
   }, [setData]);
 
-  // ✅ Add a new tenant
   const addTenant = useCallback(async (tenant: Omit<Tenant, 'id'>) => {
     try {
       const res = await api.post('/tenants', tenant);
@@ -49,13 +46,12 @@ export const useData = () => {
     }
   }, [setData, logAction, sendNotification]);
 
-  // ✅ Update tenant
   const updateTenant = useCallback(async (tenant: Tenant) => {
     try {
       const res = await api.put(`/tenants/${tenant.id}`, tenant);
       setData(prev => ({
         ...prev,
-        tenants: prev.tenants.map(t => t.id === tenant.id ? res.data : t),
+        tenants: prev.tenants.map(t => (t.id === tenant.id ? res.data : t)),
       }));
       logAction(`Updated tenant: ${tenant.name}`);
     } catch (err) {
@@ -63,7 +59,6 @@ export const useData = () => {
     }
   }, [setData, logAction]);
 
-  // ✅ Delete tenant
   const deleteTenant = useCallback(async (tenant: Tenant) => {
     try {
       await api.delete(`/tenants/${tenant.id}`);
@@ -78,7 +73,7 @@ export const useData = () => {
     }
   }, [setData, logAction, sendNotification]);
 
-  // ✅ Add a property and sync it into context
+  // Add a property
   const addProperty = useCallback(async (newProperty: Partial<Property>) => {
     try {
       const res = await api.post('/properties', newProperty);
@@ -93,6 +88,36 @@ export const useData = () => {
     }
   }, [setData, logAction, sendNotification]);
 
+  // **Update a property**
+  const updateProperty = useCallback(async (property: Property) => {
+    try {
+      const res = await api.put(`/properties/${property.id}`, property);
+      setData(prev => ({
+        ...prev,
+        properties: prev.properties.map(p => (p.id === property.id ? res.data : p)),
+      }));
+      logAction(`Updated property: ${property.name}`);
+      sendNotification(`Property "${property.name}" updated.`);
+    } catch (err) {
+      console.error('Failed to update property:', err);
+    }
+  }, [setData, logAction, sendNotification]);
+
+  // **Delete a property**
+  const deleteProperty = useCallback(async (propertyId: string) => {
+    try {
+      await api.delete(`/properties/${propertyId}`);
+      setData(prev => ({
+        ...prev,
+        properties: prev.properties.filter(p => p.id !== propertyId),
+      }));
+      logAction(`Deleted property`);
+      sendNotification(`Property deleted.`);
+    } catch (err) {
+      console.error('Failed to delete property:', err);
+    }
+  }, [setData, logAction, sendNotification]);
+
   return {
     data,
     setData,
@@ -100,6 +125,8 @@ export const useData = () => {
     sendNotification,
     fetchProperties,
     addProperty,
+    updateProperty,
+    deleteProperty, // <-- add these two
     fetchTenants,
     addTenant,
     updateTenant,

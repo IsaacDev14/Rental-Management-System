@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes';
 import propertyRoutes from './routes/propertyRoutes';
 import tenantRoutes from './routes/tenantRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import expenseRoutes from './routes/expenseRoutes';
 import { errorHandler } from './middleware/errorMiddleware';
 
 dotenv.config();
@@ -23,6 +24,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/expenses', expenseRoutes);
+
+
 app.use(errorHandler);
 
 mongoose

@@ -2,7 +2,7 @@
 import { useContext, useCallback } from 'react';
 import { DataContext } from '../contexts/DataContext';
 import api from '../utils/api';
-import type { Property, Tenant, Payment } from '../types/models';
+import type { Property, Tenant, Payment, Expense } from '../types/models';
 import { useAuth } from './useAuth';
 
 export const useData = () => {
@@ -136,15 +136,13 @@ export const useData = () => {
   const addPayment = useCallback(
     async (payment: Omit<Payment, 'id'> & { propertyId: string; unitId: string; date: string; method: string; status: string }) => {
       try {
-        // Transform payment object to match backend schema
         const preparedPayment = {
           tenantId: payment.tenantId,
-          propertyId: payment.propertyId,  // MUST be provided by caller
-          unitId: payment.unitId,          // MUST be provided by caller
+          propertyId: payment.propertyId,
+          unitId: payment.unitId,
           amount: payment.amount,
-          paymentDate: new Date(payment.date),  // convert from string date to Date
+          paymentDate: new Date(payment.date),
           paymentMethod: payment.method,
-          // Map status to backend enum
           status:
             payment.status === 'Paid'
               ? 'Completed'
@@ -195,6 +193,59 @@ export const useData = () => {
     }
   }, [setData, logAction, sendNotification]);
 
+  // --- Expenses ---
+
+  const fetchExpenses = useCallback(async () => {
+    try {
+      const res = await api.get('/expenses');
+      setData(prev => ({ ...prev, expenses: res.data }));
+    } catch (err) {
+      console.error('Failed to fetch expenses:', err);
+    }
+  }, [setData]);
+
+  const addExpense = useCallback(async (expense: Omit<Expense, 'id'>) => {
+    try {
+      const res = await api.post('/expenses', expense);
+      setData(prev => ({
+        ...prev,
+        expenses: [...prev.expenses, res.data],
+      }));
+      logAction(`Added expense: ${res.data.description}`);
+      sendNotification(`Expense added.`);
+    } catch (err) {
+      console.error('Failed to add expense:', err);
+    }
+  }, [setData, logAction, sendNotification]);
+
+  const updateExpense = useCallback(async (expense: Expense) => {
+    try {
+      const res = await api.put(`/expenses/${expense.id}`, expense);
+      setData(prev => ({
+        ...prev,
+        expenses: prev.expenses.map(e => (e.id === expense.id ? res.data : e)),
+      }));
+      logAction(`Updated expense: ${expense.description}`);
+      sendNotification(`Expense updated.`);
+    } catch (err) {
+      console.error('Failed to update expense:', err);
+    }
+  }, [setData, logAction, sendNotification]);
+
+  const deleteExpense = useCallback(async (expenseId: string) => {
+    try {
+      await api.delete(`/expenses/${expenseId}`);
+      setData(prev => ({
+        ...prev,
+        expenses: prev.expenses.filter(e => e.id !== expenseId),
+      }));
+      logAction(`Deleted expense ID: ${expenseId}`);
+      sendNotification(`Expense deleted.`);
+    } catch (err) {
+      console.error('Failed to delete expense:', err);
+    }
+  }, [setData, logAction, sendNotification]);
+
   return {
     data,
     setData,
@@ -215,5 +266,10 @@ export const useData = () => {
     addPayment,
     updatePayment,
     deletePayment,
+
+    fetchExpenses,
+    addExpense,
+    updateExpense,
+    deleteExpense,
   };
 };
